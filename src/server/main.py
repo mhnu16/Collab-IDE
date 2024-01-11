@@ -1,12 +1,15 @@
 import http.server
-import socketserver
+import ssl
 
-import const as con
+from const import SERVER
+
 
 
 class MyHandler(http.server.SimpleHTTPRequestHandler):
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=con.FILE_SERVE_PATH, **kwargs)
+        super().__init__(*args, directory=SERVER.FILE_SERVE_PATH, **kwargs)
+
 
     def do_GET(self):
         if self.path == "/":
@@ -17,8 +20,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
 
 def run_server(port):
-    with socketserver.TCPServer(("", port), MyHandler) as httpd:
-        print(f"Server running at http://localhost:{port}")
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain(SERVER.CERT_PATH, SERVER.KEY_PATH)
+
+    with http.server.HTTPServer((SERVER.IP, port), MyHandler) as httpd:
+        httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
+        print(f"Server running at https://{httpd.server_address[0]}:{httpd.server_address[1]}")
         httpd.serve_forever()
 
 
