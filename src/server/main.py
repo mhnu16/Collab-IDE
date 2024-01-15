@@ -8,7 +8,7 @@ from const import SERVER
 class MyHandler(http.server.SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=SERVER.FILE_SERVE_PATH, **kwargs)
+        super().__init__(*args, directory=SERVER.SERVE_PATH, **kwargs)
 
 
     def do_GET(self):

@@ -5,5 +5,5 @@ class SERVER:
     SERVE_PATH: str = os.path.join(os.path.dirname(__file__), '..', 'public')
     IP = '127.0.0.1'
     PORT = 5000
-    CERT_PATH = os.path.join(os.path.dirname(__file__), '..', 'cert.pem')
+    CERT_PATH = os.path.join(os.path.dirname(__file__), 'security', 'cert.pem')
     KEY_PATH = os.path.join(os.path.dirname(__file__), 'security', 'key.pem')
