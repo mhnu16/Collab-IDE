@@ -7,3 +7,10 @@ class SERVER:
     PORT = 5000
     CERT_PATH = os.path.join(os.path.dirname(__file__), 'security', 'cert.pem')
     KEY_PATH = os.path.join(os.path.dirname(__file__), 'security', 'key.pem')
+
+class DATABASE:
+    DB_PATH = os.path.join(os.path.dirname(__file__), 'database', 'database.db')
+    
+    
+# !!! DELETE THIS !!!
+# PEM passphrase: mhnu
