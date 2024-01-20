@@ -7,13 +7,12 @@ from const import SERVER
 
 
 class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-
     def __init__(self, database, *args, **kwargs):
         self.database = database
         # A dictionary that maps a path to a procedure
         self.path_to_methods = {
             "/login": self.do_path_LOGIN,
-            "/register": self.do_path_REGISTER
+            "/register": self.do_path_REGISTER,
         }
         super().__init__(*args, directory=SERVER.SERVE_PATH, **kwargs)
 
@@ -83,8 +82,10 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         # Check if the username or email already exists in the database
-        if (self.database.get_user_by_name(username) is not None
-                or self.database.get_user_by_email(email) is not None):
+        if (
+            self.database.get_user_by_name(username) is not None
+            or self.database.get_user_by_email(email) is not None
+        ):
             # If the username or email already exists, return 404 with a message
             self.send_response(404)
             self.end_headers()
@@ -120,14 +121,11 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def parse_AJAX_request(self):
         # This function parses the body of an AJAX request.
         # It returns a dictionary with the key value pairs of the body.
-        content_length = int(self.headers['Content-Length'])
+        content_length = int(self.headers["Content-Length"])
         body = self.rfile.read(content_length)
         body = body.decode()
         body = body.split("&")
-        body = {
-            key: value
-            for key, value in [pair.split("=") for pair in body]
-        }
+        body = {key: value for key, value in [pair.split("=") for pair in body]}
         return body
 
 
@@ -139,17 +137,17 @@ class HTTPSServer(threading.Thread):
     """
 
     def __init__(self, database):
-        super().__init__(daemon=True)
+        super().__init__()
         self.database = database
+        self.daemon = True
 
     def run(self):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        context.load_cert_chain(SERVER.CERT_PATH, SERVER.KEY_PATH)
+        context.load_cert_chain(SERVER.CERT_PATH, SERVER.KEY_PATH, SERVER.get_ssl_password())
 
         # This is done to pass the database to the HTTPRequestHandler class, so that it may interact with it.
         handler = partial(HTTPRequestHandler, self.database)
-        with http.server.HTTPServer((SERVER.IP, SERVER.PORT),
-                                    handler) as httpd:
+        with http.server.HTTPServer((SERVER.IP, SERVER.PORT), handler) as httpd:
             httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
             print(
                 f"Server running at https://{httpd.server_address[0]}:{httpd.server_address[1]}"

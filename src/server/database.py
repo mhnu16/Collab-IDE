@@ -3,6 +3,9 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from hashlib import sha256
 
+from const import DATABASE
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -11,7 +14,8 @@ class User(Base):
     """
     A class that represents a user in the database.
     """
-    __tablename__ = 'users'
+
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, nullable=False)
     username = Column(String, nullable=False, unique=True)
@@ -24,13 +28,12 @@ class User(Base):
 
 class Database:
     """
-    A class that represents a database. 
+    A class that represents a database.
     It acts as an interface between the server and the database.
     """
 
     def __init__(self) -> None:
-        self.engine = create_engine('sqlite:///database/database.db',
-                                    echo=True)
+        self.engine = create_engine("sqlite:///" + DATABASE.DB_PATH, echo=True)
         Base.metadata.create_all(self.engine)
 
     def add_user(self, username, email, password) -> None:
@@ -55,14 +58,14 @@ class Database:
         """
         with self.__get_session() as session:
             return session.query(User).filter_by(email=email).first()
-        
+
     def __get_session(self):
         """
         Gets a session from the database.
         """
         Session = sessionmaker(bind=self.engine)
         return Session.begin()
-    
+
     def hash(self, password):
         """
         Hashes the password.
