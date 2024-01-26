@@ -16,6 +16,7 @@ def main():
     server.run()
 
     # Keep the main thread alive for testing purposes.
+    # Maybe change the http_server to the main thread later.
     while True:
         pass
 

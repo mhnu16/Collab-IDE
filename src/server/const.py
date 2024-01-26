@@ -1,15 +1,15 @@
 import os
-
+import datetime
 
 class SERVER:
-    SERVE_PATH: str = os.path.join(os.path.dirname(__file__), "..", "public")
-    IP = "127.0.0.1"
-    PORT = 5000
-    CERT_PATH = os.path.join(os.path.dirname(__file__), "security", "cert.pem")
-    KEY_PATH = os.path.join(os.path.dirname(__file__), "security", "key.pem")
+    SERVE_PATH: str  = os.path.join(os.path.dirname(__file__), "..", "public")
+    IP: str = "127.0.0.1"
+    PORT: int = 5000
+    CERT_PATH: str = os.path.join(os.path.dirname(__file__), "security", "cert.pem")
+    KEY_PATH: str = os.path.join(os.path.dirname(__file__), "security", "key.pem")
 
     @staticmethod
-    def get_ssl_password():
+    def get_ssl_password() -> str:
         with open(
             os.path.join(os.path.dirname(__file__), "security", ".key"), "r"
         ) as file:
@@ -17,4 +17,5 @@ class SERVER:
 
 
 class DATABASE:
-    DB_PATH = os.path.join(os.path.dirname(__file__), "database", "database.db")
+    DB_PATH: str = os.path.join(os.path.dirname(__file__), "database", "database.db")
+    SESSION_IDLE_TIMEOUT: datetime.timedelta = datetime.timedelta(weeks=1)

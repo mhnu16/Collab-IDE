@@ -333,3 +333,5 @@ pyrightconfig.json
 
 # Ignore the key file
 *.key
+# Ignore the database file
+database.db
