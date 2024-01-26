@@ -1,6 +1,5 @@
 import http.server, http.cookies
 import ssl
-import threading
 from functools import partial
 
 from const import SERVER
@@ -181,19 +180,17 @@ class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Set-Cookie", cookie.output(header="").strip())
 
 
-class HTTPSServer(threading.Thread):
+class HTTPSServer():
     """
-    A class that handles the HTTPS server. It runs on a separate thread.
+    A class that handles the HTTPS server.
     It takes care of serving the static files of the website, and handling requests.
     The procedure for handling requests is defined in the HTTPRequestHandler class.
     """
 
     def __init__(self, database: Database):
-        super().__init__()
         self.database = database
-        self.daemon = True
 
-    def run(self):
+    def serve(self):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain(
             SERVER.CERT_PATH, SERVER.KEY_PATH, SERVER.get_ssl_password()
