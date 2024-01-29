@@ -1,14 +1,14 @@
-from http_handler import HTTPSServer
+from web_server import WebServer
 from database import Database
 
 
 class Server:
     def __init__(self) -> None:
         self.database = Database()
-        self.http_server = HTTPSServer(self.database)
+        self.webserver = WebServer(self.database)
 
     def run(self):
-        self.http_server.serve()
+        self.webserver.serve()
 
 
 def main():
