@@ -1,14 +1,14 @@
-from web_server import WebServer
+from backend.src.api_server import ApiServer
 from database import Database
 
 
 class Server:
     def __init__(self) -> None:
         self.database = Database()
-        self.webserver = WebServer(self.database)
+        self.api = ApiServer(self.database)
 
     def run(self):
-        self.webserver.serve()
+        self.api.serve()
 
 
 def main():

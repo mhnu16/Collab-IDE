@@ -6,7 +6,8 @@ from database import Database
 
 from random import random
 
-class WebServer():
+
+class ApiServer():
 
     def __init__(self, database: Database):
         self.database = database
@@ -14,13 +15,9 @@ class WebServer():
                                static_folder=SERVER.SERVE_PATH,
                                static_url_path='')
 
-        @self.app.route("/")
-        def index():
-            return flask.send_from_directory(SERVER.SERVE_PATH, "index.html")
-
-        @self.app.route("/rand")
+        @self.app.route("/api/rand")
         def rand():
             return flask.jsonify(num=random())
 
     def serve(self):
-        self.app.run(host=SERVER.IP, port=SERVER.PORT, debug=False)
+        self.app.run(host=SERVER.IP, port=SERVER.PORT, debug=True)

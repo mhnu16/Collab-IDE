@@ -50,10 +50,12 @@ class Session(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     session_id = Column(String, nullable=False, unique=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-    last_accessed_at = Column(
-        DateTime, default=datetime.datetime.utcnow, nullable=False
-    )
+    created_at = Column(DateTime,
+                        default=datetime.datetime.utcnow,
+                        nullable=False)
+    last_accessed_at = Column(DateTime,
+                              default=datetime.datetime.utcnow,
+                              nullable=False)
 
     def __repr__(self) -> str:
         return f"<Session(session_id={self.session_id}, user_id={self.user_id}, created_at={self.created_at}, last_accessed_at={self.last_accessed_at})>"
@@ -69,7 +71,8 @@ class Database:
     """
 
     def __init__(self) -> None:
-        self.engine = create_engine("sqlite:///" + DATABASE.DB_PATH, echo=False)
+        self.engine = create_engine("sqlite:///" + DATABASE.DB_PATH,
+                                    echo=False)
         Base.metadata.create_all(self.engine)
 
     def add_user(self, username: str, email: str, password: str) -> int:
@@ -121,10 +124,8 @@ class Database:
             return False
 
         # Check if the session is expired
-        if (
-            datetime.datetime.now() - session.last_accessed_at
-            > DATABASE.SESSION_IDLE_TIMEOUT
-        ):
+        if (datetime.datetime.now() - session.last_accessed_at
+                > DATABASE.SESSION_IDLE_TIMEOUT):
             # If the session is expired, delete it from the database
             self.delete_from(Session, Session.session_id == session_id)
             return False
@@ -138,11 +139,9 @@ class Database:
         Updates a session's last_accessed_at field.
         """
         with self.__open_session() as db_session:
-            statement = (
-                update(Session)
-                .filter_by(session_id=session_id)
-                .values(last_accessed_at=datetime.datetime.now())
-            )
+            statement = (update(Session).filter_by(
+                session_id=session_id).values(
+                    last_accessed_at=datetime.datetime.now()))
             db_session.execute(statement)
 
     def delete_from(self, table: Type[tables], *filters) -> None:
