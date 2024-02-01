@@ -1,26 +1,14 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import RandButton from './components/RandButton';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+export default function MyApp() {
+  return ( 
+    <div className='App'>  
+      <h1>Hello Gamer</h1>
+      <img src={logo} alt="React Logo" width={500}/>
+      <RandButton />
     </div>
   );
 }
-
-export default App;

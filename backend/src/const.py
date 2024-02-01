@@ -2,7 +2,7 @@ import os
 import datetime
 
 class SERVER:
-    SERVE_PATH: str  = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
+    SERVE_PATH: str  = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "build")
     IP: str = "127.0.0.1"
     PORT: int = 5000
     CERT_PATH: str = os.path.join(os.path.dirname(__file__), "security", "cert.pem")

@@ -1,4 +1,4 @@
-from backend.src.api_server import ApiServer
+from api_server import ApiServer
 from database import Database
 
 
