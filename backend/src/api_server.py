@@ -19,7 +19,7 @@ class ApiServer():
 
         @self.app.route("/api/rand")
         def rand():
-            return flask.jsonify(num=random())
+            return flask.jsonify(rand=random())
 
         @self.app.route("/")
         def index():
