@@ -1,36 +1,53 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.scss';
-import jQuery from 'jquery';
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import './App.css'
+import jquery from 'jquery'
 
-export default function MyApp() {
-  let [label, setLabel] = React.useState('')
-  let [count, setCount] = React.useState(0)
+function getRand() {
+  return jquery.ajax({
+    url: '/api/rand',
+    success: function (data) {
+      return data
+    },
+    error: function () {
+      return 'error'
+    }
+  })
+}
 
-  function onRandButtonClick() {
-    jQuery.ajax({
-      url: 'http://localhost:5000/api/rand',
-      type: 'GET',
-      success: function (data: any) {
-        let result = "Random number: " + data.rand
-        setLabel(result)
-        setCount(count + 1)
-      },
-      error: function () {
-        setLabel('Error')
-      }
-    })
-  }
+export default function App() {
+  const [count, setCount] = useState(0)
+  const [data, setData] = useState('')
 
   return (
-    <div className='App'>
-      <h1>Hello Gamer</h1>
-      <img className='Logo' src={logo} alt="React Logo" width={500} />
-      <div className='Random'>
-        <label>{label}</label>
-        <button onClick={onRandButtonClick}>Click to get a random number!</button>
-        <label>You clicked {count} times</label>
+    <>
+      <div>
+        <a href="https://vitejs.dev" target="_blank">
+          <img src={viteLogo} className="logo" alt="Vite logo" />
+        </a>
+        <a href="https://react.dev" target="_blank">
+          <img src={reactLogo} className="logo react" alt="React logo" />
+        </a>
       </div>
-    </div>
-  );
+      <h1>Vite + React</h1>
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
+        <button onClick={() => getRand().then(function (result) {
+          setData(result['rand'])
+        })}>
+          {data || 'fetch data'}
+        </button>
+        <button onClick={() => { setCount(0); setData('') }}>reset</button>
+        <p>
+          Edit <code>src/App.tsx</code> and save to test HMR
+        </p>
+      </div>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
+    </>
+  )
 }

@@ -8,7 +8,7 @@ class Server:
         self.api = ApiServer(self.database)
 
     def run(self):
-        self.api.serve()
+        self.api.serve(debug=True)
 
 
 def main():

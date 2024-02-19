@@ -29,5 +29,5 @@ class ApiServer():
         def static_files(path):
             return flask.send_from_directory(SERVER.SERVE_PATH, path)
 
-    def serve(self):
-        self.app.run(host=SERVER.IP, port=SERVER.PORT, debug=True)
+    def serve(self, debug=False):
+        self.app.run(host=SERVER.IP, port=SERVER.PORT, debug=debug)
