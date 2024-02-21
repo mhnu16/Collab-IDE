@@ -6,7 +6,7 @@ def main(dev_mode=False):
     cmd_prefix = 'start cmd /k '
 
     if dev_mode:
-        print('Running in development mode')
+        print('Starting in development mode')
 
         # Starts up the web server, via Vite
         os.chdir(os.path.join(root, "frontend"))
@@ -18,11 +18,11 @@ def main(dev_mode=False):
         os.system(cmd_prefix + py_cmd)
 
     else:
-        print('Running in production mode')
+        print('Starting in production mode')
 
         # Starts up the web server, via Vite
         os.chdir(os.path.join(root, "frontend"))
-        vit_cmd = "npm run build && npm run preview"
+        vit_cmd = "\"npm run build && npm run preview\""
         os.system(cmd_prefix + vit_cmd)
 
         os.chdir(os.path.join(root, "backend", "src"))
