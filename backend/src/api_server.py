@@ -1,5 +1,6 @@
 import flask
 import flask_cors
+import ssl
 
 from const import SERVER
 
@@ -8,13 +9,13 @@ from database import Database
 from random import random
 
 
-class ApiServer():
+class ApiServer:
 
     def __init__(self, database: Database):
         self.database = database
-        self.app = flask.Flask(__name__,
-                               static_folder=SERVER.SERVE_PATH,
-                               static_url_path='')
+        self.app = flask.Flask(
+            __name__, static_folder=SERVER.SERVE_PATH, static_url_path=""
+        )
         self.cors = flask_cors.CORS(self.app, resources={r"/api/*": {"origins": "*"}})
 
         @self.app.route("/api/rand")
@@ -30,4 +31,8 @@ class ApiServer():
             return flask.send_from_directory(SERVER.SERVE_PATH, path)
 
     def serve(self, debug=False):
-        self.app.run(host=SERVER.IP, port=SERVER.PORT, debug=debug)
+        context = ssl.SSLContext()
+        context.load_cert_chain(
+            SERVER.CERT_PATH, SERVER.KEY_PATH, SERVER.get_ssl_password()
+        )
+        self.app.run(host=SERVER.IP, port=SERVER.PORT, debug=debug, ssl_context=context)
