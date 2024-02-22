@@ -1,7 +1,7 @@
 import os
 import getpass
 
-def main():
+def set_key():
     root = os.path.dirname(os.path.abspath(__file__))
 
     key = getpass.getpass("Enter the key: ")
@@ -15,4 +15,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    set_key()
