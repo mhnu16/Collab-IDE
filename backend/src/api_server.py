@@ -4,7 +4,7 @@ import ssl
 
 from const import SERVER
 
-from database import Database
+from database import Database, User, Session
 
 from random import random
 
@@ -19,6 +19,94 @@ class ApiServer:
         @self.app.route("/api/rand")
         def rand():
             return flask.jsonify(rand=random())
+
+        @self.app.route("/api/login", methods=["POST"])
+        def login():
+            data = flask.request.json
+            if not data:
+                return flask.jsonify({"error": "Invalid request"})
+            email = data.get("email")
+            password = data.get("password")
+            if email and password:
+                password = self.database.hash_sha256(password)
+                user = self.database.select_from(
+                    User, User.email == email, User.password == password
+                )
+                if user:
+                    session_id = self.database.add_session(user.id)
+                    # Set cookie
+                    response = flask.jsonify({"success": True})
+                    response.set_cookie(
+                        "session_id",
+                        session_id,
+                        httponly=True,
+                        secure=True,
+                        samesite="Strict",
+                    )
+                    return response
+            return flask.jsonify({"error": "Invalid username or password"})
+
+        @self.app.route("/api/logout", methods=["POST"])
+        def logout():
+            session_id = flask.request.cookies.get("session_id")
+            if session_id:
+                self.database.delete_from(Session, Session.id == session_id)
+            response = flask.jsonify({"success": True})
+            response.set_cookie(
+                "session_id",
+                "",
+                expires=0,
+                httponly=True,
+                secure=True,
+                samesite="Strict",
+            )
+            return response
+
+        @self.app.route("/api/register", methods=["POST"])
+        def register():
+            data = flask.request.json
+            if not data:
+                return flask.jsonify({"error": "Invalid request"})
+            email = data.get("email")
+            username = data.get("username")
+            password = data.get("password")
+            if email and username and password:
+                user_id = self.database.add_user(username, email, password)
+                if user_id != -1:
+                    session_id = self.database.add_session(user_id)
+                    response = flask.jsonify({"success": True})
+                    response.set_cookie(
+                        "session_id",
+                        session_id,
+                        httponly=True,
+                        secure=True,
+                        samesite="Strict",
+                    )
+                    return response
+            return flask.jsonify({"error": "Failed to register user"})
+
+        @self.app.before_request
+        def before_request():
+            if not flask.request.path.startswith("/api"):
+                return
+            if flask.request.path in ["/api/login", "/api/logout", "/api/register"]:
+                return
+            
+            session_id = flask.request.cookies.get("session_id")
+            if not session_id:
+                return flask.make_response(
+                    flask.jsonify({"error": "Not logged in"}), 401
+                )
+                # return flask.redirect("/login")
+            if not self.database.validate_session(session_id):
+                return flask.redirect("/login")
+
+            session = self.database.select_from(
+                Session, Session.session_id == session_id
+            )
+            user = self.database.select_from(User, User.id == session.user_id)
+            # Sets the user in the global context, This allows us to access the user details in subsequent requests (I think)
+            flask.g.user = user
 
     def serve(self, debug=False):
         context = ssl.SSLContext()

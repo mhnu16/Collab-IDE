@@ -78,6 +78,17 @@ class Database:
     def add_user(self, username: str, email: str, password: str) -> int:
         """
         Adds a user to the database.
+
+        Note:
+        The password is hashed inside this method.
+        
+        Args:
+            username: The username of the user.
+            email: The email of the user.
+            password: The password of the user.
+
+        Returns:
+            The id of the user if the user was added successfully, -1 otherwise.
         """
         with self.__open_session() as db_session:
             password = self.hash_sha256(password)
@@ -86,7 +97,7 @@ class Database:
 
         user = self.select_from(User, User.username == username)
         if user is None:
-            raise Exception("Failed to add user to the database")
+            return -1
         return user.id
 
     def add_session(self, user_id: int) -> str:
@@ -188,7 +199,7 @@ class Database:
             *filters: The filters to apply to the WHERE clause.
 
         Returns:
-            The user if it exists, None otherwise.
+            The found row if it exists, None otherwise.
 
         """
         with self.__open_session() as db_session:
