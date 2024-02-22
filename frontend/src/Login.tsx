@@ -1,4 +1,5 @@
 import { useFormik } from 'formik';
+import './styles/Login.scss';
 
 export default function Login() {
     const formik = useFormik({
@@ -12,9 +13,9 @@ export default function Login() {
     });
 
     return (
-        <div className='card'>
+        <div>
             <h1>Login</h1>
-            <form onSubmit={formik.handleSubmit}>
+            <form className='login-form' onSubmit={formik.handleSubmit}>
                 <div className='form-group'>
                     <label htmlFor='email'>Email</label>
                     <input
