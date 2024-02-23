@@ -1,25 +1,4 @@
-import jquery from "jquery";
-
-function getRand() {
-  return new Promise<RandResponse>((resolve, reject) => {
-    jquery.ajax({
-      url: "/api/rand",
-      method: "GET",
-      success: (res: RandResponse) => {
-        resolve(res);
-      },
-      error: (err) => {
-        // Checks if the request was unauthorized
-        if (err.status === 401) {
-          // Redirects to the login page
-          window.location.href = "/login";
-        } else {
-          reject(err);
-        }
-      },
-    });
-  });
-}
+import { sendRequest } from "./ServerApi"
 
 export default function RandButton({
   data,
@@ -28,24 +7,27 @@ export default function RandButton({
   data: string;
   setData: (data: string) => void;
 }) {
+  function getRand() {
+    sendRequest("/api/rand", "GET", null).then(
+      (res) => {
+        setData(res.data.rand.toString());
+      },
+      (err) => {
+        if (err.status === 401) {
+          console.error(err.responseJSON.data.error)
+          window.location.href = "/login";
+        }
+      }
+    )
+  }
+
   return (
     <button
-      onClick={() => {
-        getRand().then(
-          (res) => {
-            setData(res.rand.toString());
-          },
-          (err) => {
-            console.error(err);
-          }
-        );
-      }}
+      onClick={
+        () => getRand()
+      }
     >
       {data ? data : "fetch data"}
     </button>
   );
-}
-
-interface RandResponse {
-  rand: number;
 }

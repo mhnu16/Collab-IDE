@@ -1,3 +1,4 @@
+from typing import Any
 import flask
 import flask_cors
 import ssl
@@ -14,17 +15,19 @@ class ApiServer:
     def __init__(self, database: Database):
         self.database = database
         self.app = flask.Flask(__name__)
-        self.cors = flask_cors.CORS(self.app, resources={r"/api/*": {"origins": "*"}})
+        self.cors = flask_cors.CORS(
+            self.app, resources={r"/api/*": {"origins": "https://localhost:3000"}}
+        )
 
         @self.app.route("/api/rand")
         def rand():
-            return flask.jsonify(rand=random())
+            return self.json_response(True, {"rand": random()})
 
         @self.app.route("/api/login", methods=["POST"])
         def login():
             data = flask.request.json
             if not data:
-                return flask.jsonify({"error": "Invalid request"})
+                return self.json_response(False, {"error": "Invalid request"}, 400)
             email = data.get("email")
             password = data.get("password")
             if email and password:
@@ -35,7 +38,7 @@ class ApiServer:
                 if user:
                     session_id = self.database.add_session(user.id)
                     # Set cookie
-                    response = flask.jsonify({"success": True})
+                    response = self.json_response(True, {"user": user.to_dict()})
                     response.set_cookie(
                         "session_id",
                         session_id,
@@ -44,14 +47,17 @@ class ApiServer:
                         samesite="Strict",
                     )
                     return response
-            return flask.jsonify({"error": "Invalid username or password"})
+                else:
+                    return self.json_response(False, {"error": "Email or password is incorrect"})
+
+            return self.json_response(False, {"error": "Failed to login"})
 
         @self.app.route("/api/logout", methods=["POST"])
         def logout():
             session_id = flask.request.cookies.get("session_id")
             if session_id:
                 self.database.delete_from(Session, Session.id == session_id)
-            response = flask.jsonify({"success": True})
+            response = self.json_response(True, {})
             response.set_cookie(
                 "session_id",
                 "",
@@ -66,7 +72,7 @@ class ApiServer:
         def register():
             data = flask.request.json
             if not data:
-                return flask.jsonify({"error": "Invalid request"})
+                return self.json_response(False, {"error": "Invalid request"}, 400)
             email = data.get("email")
             username = data.get("username")
             password = data.get("password")
@@ -74,7 +80,8 @@ class ApiServer:
                 user_id = self.database.add_user(username, email, password)
                 if user_id != -1:
                     session_id = self.database.add_session(user_id)
-                    response = flask.jsonify({"success": True})
+                    user = self.database.select_from(User, User.id == user_id)
+                    response = self.json_response(True, {"user": user.to_dict()})
                     response.set_cookie(
                         "session_id",
                         session_id,
@@ -83,7 +90,7 @@ class ApiServer:
                         samesite="Strict",
                     )
                     return response
-            return flask.jsonify({"error": "Failed to register user"})
+            return self.json_response(False, {"error": "Failed to register"})
 
         @self.app.before_request
         def before_request():
@@ -91,22 +98,25 @@ class ApiServer:
                 return
             if flask.request.path in ["/api/login", "/api/logout", "/api/register"]:
                 return
-            
+
             session_id = flask.request.cookies.get("session_id")
             if not session_id:
-                return flask.make_response(
-                    flask.jsonify({"error": "Not logged in"}), 401
-                )
+                return self.json_response(False, {"error": "Not logged in"}, 401)
                 # return flask.redirect("/login")
             if not self.database.validate_session(session_id):
-                return flask.redirect("/login")
+                return self.json_response(False, {"error": "Invalid session"}, 401)
+                # return flask.redirect("/login")
 
             session = self.database.select_from(
                 Session, Session.session_id == session_id
             )
             user = self.database.select_from(User, User.id == session.user_id)
-            # Sets the user in the global context, This allows us to access the user details in subsequent requests (I think)
-            flask.g.user = user
+            flask.g.user = user # This allows us to access the user object while processing the request
+
+    def json_response(self, success: bool, data: dict[str, Any], status_code=200):
+        return flask.make_response(
+            flask.jsonify({"success": success, "data": data}), status_code
+        )
 
     def serve(self, debug=False):
         context = ssl.SSLContext()

@@ -1,3 +1,5 @@
+@import 'variables';
+
 .login-form {
     display: flex;
     flex-direction: column;
@@ -25,4 +27,9 @@ input {
 label {
     font-size: 20px;
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+.error-label {
+    color: $error-color;
+    font-size: 14px;
 }
