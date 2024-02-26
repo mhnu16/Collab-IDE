@@ -45,7 +45,7 @@ class ApiServer:
                         httponly=True,
                         secure=True,
                         samesite="Strict",
-                        max_age=SERVER.COOKIE_MAX_AGE
+                        max_age=SERVER.COOKIE_MAX_AGE,
                     )
                     return response
                 else:

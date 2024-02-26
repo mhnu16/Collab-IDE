@@ -25,7 +25,7 @@ export default function Home() {
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
-        <RandButton data={data} setData={setData} /> 
+        <RandButton data={data} setData={setData} />
         <button onClick={() => { setCount(0); setData('') }}>reset</button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR

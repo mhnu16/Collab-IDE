@@ -2,7 +2,6 @@ import os
 import datetime
 
 
-
 class SERVER:
     SERVE_PATH: str = os.path.join(
         os.path.dirname(__file__), "..", "..", "frontend", "build"

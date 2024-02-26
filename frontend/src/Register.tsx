@@ -80,7 +80,7 @@ export default function Register() {
 
 
     function sendRegisterRequest(username: string, email: string, password: string) {
-        sendRequest<RegisterResponse>("api/register", "POST", {username, email, password })
+        sendRequest<RegisterResponse>("api/register", "POST", { username, email, password })
             .then((response) => {
                 if (response.success) {
                     console.log("Register successful");
