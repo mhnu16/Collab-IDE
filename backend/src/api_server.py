@@ -48,7 +48,9 @@ class ApiServer:
                     )
                     return response
                 else:
-                    return self.json_response(False, {"error": "Email or password is incorrect"})
+                    return self.json_response(
+                        False, {"error": "Email or password is incorrect"}
+                    )
 
             return self.json_response(False, {"error": "Failed to login"})
 
@@ -111,7 +113,7 @@ class ApiServer:
                 Session, Session.session_id == session_id
             )
             user = self.database.select_from(User, User.id == session.user_id)
-            flask.g.user = user # This allows us to access the user object while processing the request
+            flask.g.user = user  # This allows us to access the user object while processing the request
 
     def json_response(self, success: bool, data: dict[str, Any], status_code=200):
         return flask.make_response(

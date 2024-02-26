@@ -17,5 +17,5 @@ class SERVER:
 
 
 class DATABASE:
-    DB_PATH: str = os.path.join(os.path.dirname(__file__), "database", "database.db")
+    DB_PATH: str = os.path.join(os.path.dirname(__file__), "database", "database.sqlite")
     SESSION_IDLE_TIMEOUT: datetime.timedelta = datetime.timedelta(weeks=1)

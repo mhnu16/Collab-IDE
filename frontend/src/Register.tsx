@@ -1,27 +1,38 @@
 import { useState } from "react";
 import { useFormik } from "formik";
-import "./styles/Login.scss";
+import "./styles/Register.scss";
 import { ApiResponse, sendRequest } from "./ServerApi";
 
 
 
-export default function Login() {
+export default function Register() {
     const [error, setError] = useState("");
 
     const formik = useFormik({
         initialValues: {
+            username: "",
             email: "",
             password: "",
         },
         onSubmit: (values) => {
-            sendLoginRequest(values.email, values.password);
+            sendRegisterRequest(values.username, values.email, values.password);
         },
     });
 
     return (
         <div>
-            <h1>Login</h1>
-            <form className="login-form" onSubmit={formik.handleSubmit}>
+            <h1>Register</h1>
+            <form className="register-form" onSubmit={formik.handleSubmit}>
+                <div className="form-group">
+                    <label htmlFor="name">Username</label>
+                    <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        onChange={formik.handleChange}
+                        value={formik.values.username}
+                    />
+                </div>
                 <div className="form-group">
                     <label htmlFor="email">Email</label>
                     <input
@@ -45,43 +56,43 @@ export default function Login() {
                 <button type="submit">Submit</button>
                 <label hidden={!error} className="error-label">{error}</label>
             </form>
-            <a href="/register">Click Here To Register</a>
+            <a href="/login">Click Here To Login</a>
         </div>
     );
 
-    interface SuccessLoginResponse extends ApiResponse {
+    interface SuccessRegisterResponse extends ApiResponse {
         success: true;
         data: {
             user: {
                 id: number;
                 email: string;
-                name: string;
+                username: string;
             };
         };
     }
-    interface FailedLoginResponse extends ApiResponse {
+    interface FailedRegisterResponse extends ApiResponse {
         success: false;
         data: {
             error: string;
         };
     }
-    type LoginResponse = SuccessLoginResponse | FailedLoginResponse;
+    type RegisterResponse = SuccessRegisterResponse | FailedRegisterResponse;
 
 
-    function sendLoginRequest(email: string, password: string) {
-        sendRequest<LoginResponse>("api/login", "POST", { email, password })
+    function sendRegisterRequest(username: string, email: string, password: string) {
+        sendRequest<RegisterResponse>("api/register", "POST", {username, email, password })
             .then((response) => {
                 if (response.success) {
-                    console.log("Login successful");
+                    console.log("Register successful");
                     console.log(response.data.user);
                     window.location.href = "/";
                 } else {
-                    console.error("Login failed: " + response.data.error);
+                    console.error("Register failed: " + response.data.error);
                     setError(response.data.error);
                 }
             })
             .catch((error) => {
-                console.error("Login failed: " + error);
+                console.error("Register failed: " + error);
             });
     }
 }
