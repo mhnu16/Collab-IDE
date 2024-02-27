@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { UserResponse, sendRequest } from './ServerApi';
+import LoadingPage from './LoadingPage';
 
 interface User {
     id: number;
@@ -65,7 +66,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     // This is important because the user will be null until the request is complete
     // Which would cause the user to be redirected to the login page, even if they are logged in
     if (loading) {
-        return <div>Loading...</div>;
+        return <LoadingPage />;
     } else {
         if (!auth.user) {
             return <Navigate to="/login" />;

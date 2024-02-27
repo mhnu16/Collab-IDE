@@ -7,19 +7,16 @@
   text-align: center;
 }
 
-.logo {
+.App-logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
+  animation: logo-spin infinite 3s ease-in-out;
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.App-logo:hover {
+  filter: drop-shadow(0 0 2em $hover-color);
 }
 
 @keyframes logo-spin {
@@ -28,12 +25,12 @@
   }
 
   to {
-    transform: rotate(360deg);
+    transform: rotate(180deg);
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
+  a:nth-of-type(2) .App-logo {
     animation: logo-spin infinite 10s linear;
   }
 }

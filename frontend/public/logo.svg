@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <radialGradient id="gradient-1-0" gradientUnits="userSpaceOnUse" cx="540" cy="540" r="540" xlink:href="#gradient-1"/>
+    <linearGradient id="gradient-1" bx:pinned="true">
+      <stop offset="0" style="stop-color: rgb(0, 74, 173);"/>
+      <stop offset="1" style="stop-color: rgb(203, 108, 230);"/>
+    </linearGradient>
+    <radialGradient gradientUnits="userSpaceOnUse" cx="230.596" cy="6.749" r="363.681" id="gradient-0" gradientTransform="matrix(1.484818, 0, 0, 1.484818, 197.607532, 529.978977)">
+      <stop offset="0" style="stop-color: rgb(0% 0% 0%)"/>
+      <stop offset="1" style="stop-color: rgb(0% 0% 0%)"/>
+    </radialGradient>
+    <radialGradient id="gradient-2-0" gradientUnits="userSpaceOnUse" cx="540" cy="540" r="468" xlink:href="#gradient-2"/>
+    <linearGradient id="gradient-2" bx:pinned="true">
+      <stop offset="0" style="stop-color: rgb(92, 225, 230);"/>
+      <stop offset="1" style="stop-color: rgb(140, 82, 255);"/>
+    </linearGradient>
+    <linearGradient id="color-0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1, 0, 0, 1, -100.394424, 45.926762)" bx:pinned="true">
+      <stop style="stop-color: rgb(100, 136, 248);"/>
+    </linearGradient>
+    <linearGradient id="color-1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.785714, 0, 0, 1, 52.998596, -28.047075)" bx:pinned="true">
+      <stop style="stop-color: rgb(129, 154, 232);"/>
+    </linearGradient>
+    <linearGradient id="color-2" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.727273, 0, 0, 1, 409.538452, -206.526764)" bx:pinned="true">
+      <stop style="stop-color: rgb(146, 169, 244);"/>
+    </linearGradient>
+    <linearGradient id="color-3" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.625001, 0, 0, 1, 193.233398, 141.509277)" bx:pinned="true">
+      <stop style="stop-color: rgb(169, 187, 244);"/>
+    </linearGradient>
+    <linearGradient id="color-4" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.4, 0, 0, 1, 595.705688, 47.137848)" bx:pinned="true">
+      <stop style="stop-color: rgb(204, 212, 237);"/>
+    </linearGradient>
+    <linearGradient id="color-5" gradientUnits="userSpaceOnUse" bx:pinned="true">
+      <stop style="stop-color: rgb(222, 225, 234);"/>
+    </linearGradient>
+  </defs>
+  <circle style="stroke: url('#gradient-0'); fill: url('#gradient-1-0'); stroke-width: 0px;" cx="540" cy="540" r="540"/>
+  <polygon style="stroke: rgb(0, 0, 0); fill: url('#gradient-2-0'); stroke-width: 0px;" points="1008 270 1008 810 540 1080 72 810 72 270 540 0"/>
+  <polygon style="stroke: rgb(0, 0, 0); fill: url('#color-0'); stroke-width: 0px;" points="540 0 147 540 540 1080 933 540"/>
+  <polygon style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: url('#color-1');" points="540 0 222 540 540 1080 858 540"/>
+  <polygon style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: url('#color-2');" points="542.7269897460938 0 297 540 542.7269897460938 1080 783 540"/>
+  <polygon style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: url('#color-3');" points="540 0 372 540 540 1080 708 540"/>
+  <polygon style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: url('#color-4');" points="540 0 447 540 540 1080 633 540"/>
+  <polygon style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: url('#color-5');" points="540 0 522 540 540 1080 558 540"/>
+</svg>
