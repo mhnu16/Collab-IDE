@@ -95,6 +95,11 @@ class ApiServer:
                     return response
             return self.json_response(False, {"error": "Failed to register"})
 
+        @self.app.route("/api/user", methods=["GET"])
+        def user():
+            user = flask.g.user
+            return self.json_response(True, {"user": user.to_dict()})
+
         @self.app.before_request
         def before_request():
             if not flask.request.path.startswith("/api"):

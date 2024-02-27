@@ -1,12 +1,15 @@
-import { useState } from "react";
+import React from "react";
 import { useFormik } from "formik";
 import "./styles/Login.scss";
-import { ApiResponse, sendRequest } from "./ServerApi";
-
+import { ApiResponse, UserResponse, sendRequest } from "./ServerApi";
+import { useAuth } from "./Auth";
+import { useNavigate } from "react-router-dom";
 
 
 export default function Login() {
-    const [error, setError] = useState("");
+    const [error, setError] = React.useState("");
+    const auth = useAuth();
+    const navigate = useNavigate();
 
     const formik = useFormik({
         initialValues: {
@@ -49,32 +52,14 @@ export default function Login() {
         </div>
     );
 
-    interface SuccessLoginResponse extends ApiResponse {
-        success: true;
-        data: {
-            user: {
-                id: number;
-                email: string;
-                name: string;
-            };
-        };
-    }
-    interface FailedLoginResponse extends ApiResponse {
-        success: false;
-        data: {
-            error: string;
-        };
-    }
-    type LoginResponse = SuccessLoginResponse | FailedLoginResponse;
-
-
     function sendLoginRequest(email: string, password: string) {
-        sendRequest<LoginResponse>("api/login", "POST", { email, password })
+        sendRequest<UserResponse>("api/login", "POST", { email, password })
             .then((response) => {
                 if (response.success) {
                     console.log("Login successful");
                     console.log(response.data.user);
-                    window.location.href = "/";
+                    auth.login(response.data.user);
+                    navigate("/");
                 } else {
                     console.error("Login failed: " + response.data.error);
                     setError(response.data.error);

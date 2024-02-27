@@ -3,8 +3,8 @@ $primary-color: #646cff;
 $secondary-color: #535bf2;
 $background-color-dark: #242424;
 $background-color-light: #f9f9f9;
-$background-color-dark-secondary: #1f1f1f;
-$background-color-light-secondary: #f2f2f2;
+$background-color-secondary-dark: #1f1f1f;
+$background-color-secondary-light: #f2f2f2;
 $font-color-dark: rgba(255, 255, 255, 0.87);
 $font-color-light: #213547;
 $border-color-dark: #f9f9f9;
@@ -12,3 +12,18 @@ $border-color-light: #242424;
 $hover-color-dark: #535bf2;
 $hover-color-light: #747bff;
 $error-color: #fa1111;
+
+
+$background-color: $background-color-dark;
+$background-color-secondary: $background-color-secondary-dark;
+$font-color: $font-color-dark;
+$border-color: $border-color-dark;
+$hover-color: $hover-color-dark;
+
+@media (prefers-color-scheme: light) {
+    $background-color: $background-color-light;
+    $background-color-secondary: $background-color-secondary-light;
+    $font-color: $font-color-light;
+    $border-color: $border-color-light;
+    $hover-color: $hover-color-light;
+}

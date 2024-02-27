@@ -1,21 +1,34 @@
 import jquery from "jquery";
 
-export interface ApiResponse {
-    success: boolean;
+interface SuccessApiResponse {
+    success: true;
     data: any;
 }
 
-interface Error extends ApiResponse {
+interface FailedApiResponse {
+    success: false;
     data: {
         error: string;
-    };
+    }
 }
 
-export interface errorResponse extends JQuery.jqXHR {
-    responseJSON?: Error;
+export type ApiResponse = SuccessApiResponse | FailedApiResponse;
+
+export interface User {
+    id: number;
+    email: string;
+    username: string;
 }
 
-export function sendRequest<T extends ApiResponse>(url: string, method: string, data: any): Promise<T> {
+interface SuccessUserResponse extends SuccessApiResponse {
+    data: {
+        user: User;
+    }
+}
+
+export type UserResponse = SuccessUserResponse | FailedApiResponse;
+
+export function sendRequest<T extends ApiResponse>(url: string, method: string, data?: any): Promise<T> {
     if (method === "GET") {
         return new Promise<T>((resolve, reject) => {
             jquery.ajax({
@@ -24,7 +37,7 @@ export function sendRequest<T extends ApiResponse>(url: string, method: string, 
                 success: (res: T) => {
                     resolve(res);
                 },
-                error: (err: errorResponse) => {
+                error: (err) => {
                     reject(err);
                 },
             });
@@ -40,7 +53,7 @@ export function sendRequest<T extends ApiResponse>(url: string, method: string, 
                 success: (res: T) => {
                     resolve(res);
                 },
-                error: (err: errorResponse) => {
+                error: (err) => {
                     reject(err);
                 }
             });

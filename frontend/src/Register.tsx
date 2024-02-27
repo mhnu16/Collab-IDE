@@ -1,12 +1,14 @@
-import { useState } from "react";
+import React from "react";
 import { useFormik } from "formik";
 import "./styles/Register.scss";
-import { ApiResponse, sendRequest } from "./ServerApi";
-
-
+import { UserResponse, sendRequest } from "./ServerApi";
+import { useAuth } from "./Auth";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
-    const [error, setError] = useState("");
+    const [error, setError] = React.useState("");
+    const auth = useAuth();
+    const navigate = useNavigate();
 
     const formik = useFormik({
         initialValues: {
@@ -60,32 +62,14 @@ export default function Register() {
         </div>
     );
 
-    interface SuccessRegisterResponse extends ApiResponse {
-        success: true;
-        data: {
-            user: {
-                id: number;
-                email: string;
-                username: string;
-            };
-        };
-    }
-    interface FailedRegisterResponse extends ApiResponse {
-        success: false;
-        data: {
-            error: string;
-        };
-    }
-    type RegisterResponse = SuccessRegisterResponse | FailedRegisterResponse;
-
-
     function sendRegisterRequest(username: string, email: string, password: string) {
-        sendRequest<RegisterResponse>("api/register", "POST", { username, email, password })
+        sendRequest<UserResponse>("api/register", "POST", { username, email, password })
             .then((response) => {
                 if (response.success) {
                     console.log("Register successful");
                     console.log(response.data.user);
-                    window.location.href = "/";
+                    auth.login(response.data.user);
+                    navigate("/");
                 } else {
                     console.error("Register failed: " + response.data.error);
                     setError(response.data.error);

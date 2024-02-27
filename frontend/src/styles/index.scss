@@ -6,8 +6,8 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: $font-color-dark;
-  background-color: $background-color-dark;
+  color: $font-color;
+  background-color: $background-color;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,7 +22,7 @@ a {
 }
 
 a:hover {
-  color: $hover-color-dark;
+  color: $hover-color;
 }
 
 body {
@@ -40,39 +40,23 @@ h1 {
 
 button {
   border-radius: 8px;
-  border: 2px solid $border-color-dark;
+  border: 2px solid $border-color;
   padding: 0.6em 1.2em;
   margin: 0.5em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: $background-color-dark-secondary;
+  background-color: $background-color-secondary;
   cursor: pointer;
   transition: border-color 0.25s;
 }
 
 button:hover {
-  border-color: $hover-color-dark;
+  border-color: $hover-color;
   border-style: dashed;
 }
 
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: $font-color-light;
-    background-color: $background-color-light;
-  }
-
-  a:hover {
-    color: $hover-color-light;
-  }
-
-  button {
-    background-color: $background-color-light-secondary;
-    border: 2px solid $border-color-light;
-  }
 }

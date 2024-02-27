@@ -3,24 +3,23 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './styles/Home.scss'
 import RandButton from './RandButton'
-
+import { useAuth } from './Auth'
 
 
 export default function Home() {
   const [count, setCount] = useState(0)
   const [data, setData] = useState('')
+  const auth = useAuth()
+
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <h1>Home Screen</h1>
+      <div className='panel'>
+        <h2>Account Details</h2>
+        <p>Username: {auth.user?.username}</p>
+        <p>Email: {auth.user?.email}</p>
       </div>
-      <h1>Vite + React</h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
