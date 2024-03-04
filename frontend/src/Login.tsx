@@ -22,10 +22,10 @@ export default function Login() {
     });
 
     return (
-        <div>
+        <div className="container">
             <h1>Login</h1>
-            <form className="login-form" onSubmit={formik.handleSubmit}>
-                <div className="form-group">
+            <form className="panel" onSubmit={formik.handleSubmit}>
+                <div className="container">
                     <label htmlFor="email">Email</label>
                     <input
                         id="email"
@@ -35,7 +35,7 @@ export default function Login() {
                         value={formik.values.email}
                     />
                 </div>
-                <div className="form-group">
+                <div className="container">
                     <label htmlFor="password">Password</label>
                     <input
                         id="password"

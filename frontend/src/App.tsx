@@ -5,6 +5,7 @@ import { AuthProvider, ProtectedRoute } from './Auth'
 import Home from './Home'
 import Login from './Login'
 import Register from './Register'
+import CodeEditor from './CodeEditor'
 
 export default function App() {
   return (
@@ -16,6 +17,11 @@ export default function App() {
           <Route path="/" element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          } />
+          <Route path="/editor" element={
+            <ProtectedRoute>
+              <CodeEditor />
             </ProtectedRoute>
           } />
         </Routes>

@@ -22,7 +22,7 @@ export default function Register() {
     });
 
     return (
-        <div>
+        <div className="container">
             <h1>Register</h1>
             <form className="register-form" onSubmit={formik.handleSubmit}>
                 <div className="form-group">

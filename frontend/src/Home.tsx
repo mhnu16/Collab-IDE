@@ -12,7 +12,7 @@ export default function Home() {
 
 
   return (
-    <>
+    <div className='container'>
       <img alt="logo" src={logo} className="App-logo" />
       <h1>Home Screen</h1>
       <div className='panel'>
@@ -21,19 +21,9 @@ export default function Home() {
         <p>Email: {auth.user.email}</p>
       </div>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <RandButton data={data} setData={setData} />
-        <button onClick={() => { setCount(0); setData('') }}>reset</button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <button onClick={() => window.location.href = '/editor'}>Go to Editor</button>
+        <button id='logout' onClick={() => auth.logout()}>Logout</button>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      {/* <button id='logout' onClick={() => auth.logout()}>Logout</button> */}
-    </>
+    </div>
   )
 }
