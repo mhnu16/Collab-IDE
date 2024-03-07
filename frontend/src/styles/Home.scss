@@ -1,11 +1,5 @@
 @import 'variables';
 
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
 
 .App-logo {
   height: 6em;
@@ -49,8 +43,4 @@
   border: 2px solid $border-color;
   border-radius: 8px;
   background-color: $background-color-secondary;
-}
-
-.read-the-docs {
-  color: #888;
 }
