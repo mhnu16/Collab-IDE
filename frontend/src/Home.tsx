@@ -1,13 +1,10 @@
-import { useState } from 'react'
+import React from 'react'
 import logo from '/logo.svg'
 import './styles/Home.scss'
-import RandButton from './RandButton'
 import { useAuth } from './Auth'
 
 
 export default function Home() {
-  const [count, setCount] = useState(0)
-  const [data, setData] = useState('')
   const auth = useAuth()
 
 

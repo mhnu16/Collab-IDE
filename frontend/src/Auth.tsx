@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { UserResponse, sendRequest } from './ServerApi';
-import LoadingPage from './LoadingPage';
+import LoadingPage from './Components/LoadingPage';
 
 interface User {
     id: number;

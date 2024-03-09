@@ -1,7 +1,7 @@
 import React from "react";
 import { useFormik } from "formik";
 import "./styles/Login.scss";
-import { ApiResponse, UserResponse, sendRequest } from "./ServerApi";
+import { UserResponse, sendRequest } from "./ServerApi";
 import { useAuth } from "./Auth";
 import { useNavigate } from "react-router-dom";
 

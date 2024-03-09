@@ -34,6 +34,7 @@ export function sendRequest<T extends ApiResponse>(url: string, method: string, 
             jquery.ajax({
                 url: url,
                 method: method,
+                data: data,
                 success: (res: T) => {
                     resolve(res);
                 },
