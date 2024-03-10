@@ -21,7 +21,7 @@ class ApiServer:
 
         @self.app.route("/api/rand")
         def rand():
-            return self.json_response(True, {"rand": random()})
+            return self.json_response(True, {"num": random()})
 
         @self.app.route("/api/login", methods=["POST"])
         def login():
@@ -102,6 +102,11 @@ class ApiServer:
 
         @self.app.before_request
         def before_request():
+            """
+            This function is called before each request is processed.
+            It checks if the user is logged in by checking if the session_id cookie is set
+            and if the session_id is valid.
+            """
             if not flask.request.path.startswith("/api"):
                 return
             if flask.request.path in ["/api/login", "/api/logout", "/api/register"]:
