@@ -17,7 +17,13 @@ export default function Login() {
             password: "",
         },
         onSubmit: (values) => {
-            sendLoginRequest(values.email, values.password);
+            auth.login(values).then((response: UserResponse) => {
+                if (response.success) {
+                    navigate("/");
+                } else {
+                    setError(response.data.error);
+                }
+            });
         },
     });
 
@@ -51,22 +57,4 @@ export default function Login() {
             <a href="/register">Click Here To Register</a>
         </div>
     );
-
-    function sendLoginRequest(email: string, password: string) {
-        sendRequest<UserResponse>("api/login", "POST", { email, password })
-            .then((response) => {
-                if (response.success) {
-                    console.log("Login successful");
-                    console.log(response.data.user);
-                    auth.login(response.data.user);
-                    navigate("/");
-                } else {
-                    console.error("Login failed: " + response.data.error);
-                    setError(response.data.error);
-                }
-            })
-            .catch((error) => {
-                console.error("Login failed: " + error);
-            });
-    }
 }

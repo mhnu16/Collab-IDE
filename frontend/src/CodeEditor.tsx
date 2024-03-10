@@ -44,22 +44,10 @@ export default function CodeEditor() {
     console.log('Editor mounted');
   }
 
-
-  function saveFile() {
-    if (editor && currentFile) {
-      let model = editor.getModel();
-      if (model) {
-        let content = model.getValue();
-        console.log(content);
-        // TODO: Send 'content' to the backend to be saved
-      }
-    }
-  }
-
   return (
     <EditorContext.Provider value={{ editor, setCurrentFile }}>
       <div className='editor'>
-        <EditorSidePanel />
+        <EditorSidePanel></EditorSidePanel>
         <Editor
           className='editor__code-editor'
 
@@ -75,7 +63,6 @@ export default function CodeEditor() {
             }
           }}
         />
-        <button onClick={saveFile}>Save</button>
       </div>
     </EditorContext.Provider>
   );

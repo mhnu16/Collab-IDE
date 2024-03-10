@@ -9,11 +9,7 @@ interface User {
     username: string;
 }
 
-interface AuthContextType {
-    user: User;
-    login: (user: User) => void;
-    logout: () => void;
-}
+
 
 let AuthContext = React.createContext<AuthContextType>(null!);
 
@@ -24,21 +20,77 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     let [user, setUser] = React.useState<User>(null!);
 
-    const login = (newUser: User) => {
-        setUser(newUser);
+    const login = ({ email, password }: { email: string, password: string }) => {
+        return sendRequest<UserResponse>("api/login", "POST", { email, password })
+            .then((response) => {
+                if (response.success) {
+                    console.log("Login successful");
+                    console.log(response.data.user);
+                    setUser(response.data.user);
+                }
+                return response;
+            })
+            .catch((error) => {
+                console.error("Login failed: " + error);
+                throw error;
+            });
     }
 
     const logout = () => {
-        setUser(null!);
+        return sendRequest("/api/logout", "POST")
+            .then((response) => {
+                if (response.success) {
+                    setUser(null!);
+                }
+            })
+            .catch((error) => {
+                console.error("Logout failed: " + error);
+                throw error;
+            });
     };
 
+    const register = ({ username, email, password }: { username: string, email: string, password: string }) => {
+        return sendRequest<UserResponse>("api/register", "POST", { username, email, password })
+            .then((response) => {
+                if (response.success) {
+                    console.log("Register successful");
+                    console.log(response.data.user);
+                    setUser(response.data.user);
+                }
+                return response;
+            })
+            .catch((error) => {
+                console.error("Register failed: " + error);
+                throw error;
+            });
+    }
 
+    const checkUser = () => {
+        return sendRequest<UserResponse>('/api/user', 'GET')
+            .then((response) => {
+                if (response.success) {
+                    setUser(response.data.user);
+                }
+            })
+            .catch((error) => {
+                console.error("Check user failed: " + error);
+                throw error;
+            });
+    }
 
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
+        <AuthContext.Provider value={{ user, login, logout, register, checkUser }}>
             {children}
         </AuthContext.Provider>
     );
+}
+
+interface AuthContextType {
+    user: User;
+    login: ({ email, password }: { email: string, password: string }) => Promise<UserResponse>;
+    logout: () => Promise<void>;
+    register: ({ username, email, password }: { username: string, email: string, password: string }) => Promise<UserResponse>;
+    checkUser: () => Promise<UserResponse>;
 }
 
 
@@ -47,19 +99,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const auth = useAuth();
 
     React.useEffect(() => {
-        sendRequest<UserResponse>('/api/user', 'GET')
-            .then((response) => {
-                if (response.success) {
-                    auth.login(response.data.user);
-                }
-            })
-            .catch((error) => {
-                if (error.status === 401) {
-                    console.error('Not logged in')
-                }
-            }).finally(() => {
-                setLoading(false);
-            })
+        auth.checkUser().then(() => {
+            setLoading(false);
+        }).catch((error) => {
+            console.error("Check user failed: " + error);
+            setLoading(false);
+        });
     }, []);
 
     // Show a loading screen while the user is being checked

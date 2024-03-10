@@ -17,7 +17,13 @@ export default function Register() {
             password: "",
         },
         onSubmit: (values) => {
-            sendRegisterRequest(values.username, values.email, values.password);
+            auth.register(values).then((response: UserResponse) => {
+                if (response.success) {
+                    navigate("/");
+                } else {
+                    setError(response.data.error);
+                }
+            });
         },
     });
 
@@ -62,21 +68,4 @@ export default function Register() {
         </div>
     );
 
-    function sendRegisterRequest(username: string, email: string, password: string) {
-        sendRequest<UserResponse>("api/register", "POST", { username, email, password })
-            .then((response) => {
-                if (response.success) {
-                    console.log("Register successful");
-                    console.log(response.data.user);
-                    auth.login(response.data.user);
-                    navigate("/");
-                } else {
-                    console.error("Register failed: " + response.data.error);
-                    setError(response.data.error);
-                }
-            })
-            .catch((error) => {
-                console.error("Register failed: " + error);
-            });
-    }
 }

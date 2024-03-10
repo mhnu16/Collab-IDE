@@ -6,6 +6,7 @@ export default function EditorSidePanel() {
     return (
         <div className='editor-side-panel'>
             <div className='editor-side-panel__header'>
+                <button onClick={() => window.location.href = '/'}>To Home</button>
                 <h2>Files</h2>
             </div>
             <div className='editor-files-panel'>
@@ -13,12 +14,12 @@ export default function EditorSidePanel() {
                 <EditorFile label="file2.py" />
                 <EditorFile label="file3.py" />
             </div>
-        </div>
+        </div >
     );
 }
 
 function EditorFile({ label }: { label: string }) {
-    const { editor, setCurrentFile } = React.useContext(EditorContext);
+    const { setCurrentFile } = React.useContext(EditorContext);
     return (
         <div className='editor-file'>
             <p>{label}</p>
