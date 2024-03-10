@@ -59,7 +59,8 @@ class ApiServer:
         def logout():
             session_id = flask.request.cookies.get("session_id")
             if session_id:
-                self.database.delete_from(Session, Session.id == session_id)
+                self.database.delete_from(Session, Session.session_id == session_id)
+
             response = self.json_response(True, {})
             response.set_cookie(
                 "session_id",
@@ -125,6 +126,28 @@ class ApiServer:
             )
             user = self.database.select_from(User, User.id == session.user_id)
             flask.g.user = user  # This allows us to access the user object while processing the request
+
+        @self.app.after_request
+        def after_request(response):
+            if not flask.request.path.startswith("/api"):
+                return response
+            if flask.request.path in ["/api/login", "/api/logout", "/api/register"]:
+                return response
+            if response.status_code != 200:
+                return response
+
+            # We need to update the session_id cookie to extend the session's lifetime
+            session_id = flask.request.cookies.get("session_id")
+            if session_id:
+                response.set_cookie(
+                    "session_id",
+                    session_id,
+                    httponly=True,
+                    secure=True,
+                    samesite="Strict",
+                    max_age=SERVER.COOKIE_MAX_AGE,
+                )
+            return response
 
     def json_response(self, success: bool, data: dict[str, Any], status_code=200):
         return flask.make_response(
