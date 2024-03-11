@@ -1,3 +1,4 @@
+import os
 from typing import Any
 import flask
 import flask_cors
@@ -5,7 +6,7 @@ import ssl
 
 from const import SERVER
 
-from database import Database, User, Session
+from database import Database, User, Session, Project
 
 from random import random
 
@@ -95,6 +96,52 @@ class ApiServer:
                     )
                     return response
             return self.json_response(False, {"error": "Failed to register"})
+
+        @self.app.route("/api/projects", methods=["GET"])
+        def projects():
+            user = flask.g.user
+            projects = self.database.select_from(User, User.id == user.id).projects
+            return self.json_response(
+                True, {"projects": [p.to_dict() for p in projects]}
+            )
+
+        @self.app.route("/api/projects", methods=["POST"])
+        def create_project():
+            user = flask.g.user
+            data = flask.request.json
+            if not data:
+                return self.json_response(False, {"error": "Invalid request"}, 400)
+            name = data.get("name")
+            description = data.get("description")
+            language = data.get("language")
+            if name and description and language:
+                project_id = os.urandom(16).hex()
+                project_id = self.database.add_project(
+                    project_id, name, description, language, user.user_id
+                )
+
+                if project_id != -1:
+                    project = self.database.select_from(
+                        Project, Project.id == project_id
+                    )
+                    return self.json_response(True, {"project": project.to_dict()})
+            return self.json_response(False, {"error": "Failed to create project"})
+
+        @self.app.route("/api/projects/<project_id>", methods=["GET"])
+        def project(project_id):
+            user = flask.g.user
+            project = self.database.select_from(Project, Project.id == project_id)
+            if not project:
+                return self.json_response(False, {"error": "Project not found"}, 404)
+
+            # Check if user has access to the project
+            allowed_users = [user.user_id for user in project.allowed_users]
+            if user.user_id not in allowed_users:
+                return self.json_response(False, {"error": "Access denied"}, 403)
+
+            # TODO: I probably need to establish a websocket connection here, to allow for real-time communication
+
+            return self.json_response(True, {"project": project.to_dict()})
 
         @self.app.route("/api/user", methods=["GET"])
         def user():

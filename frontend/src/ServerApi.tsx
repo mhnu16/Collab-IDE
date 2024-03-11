@@ -28,6 +28,25 @@ interface SuccessUserResponse extends SuccessApiResponse {
 
 export type UserResponse = SuccessUserResponse | FailedApiResponse;
 
+export interface Project {
+    id: string;
+    project_id: string,
+    name: string,
+    description: string,
+    language: string,
+    created_at: Date,
+    last_updated_at: Date,
+    allowed_users: string[]
+}
+
+interface SuccessProjectResponse extends SuccessApiResponse {
+    data: {
+        project: Project;
+    }
+}
+
+export type ProjectResponse = SuccessProjectResponse | FailedApiResponse;
+
 export function sendRequest<T extends ApiResponse>(url: string, method: string, data?: any): Promise<T> {
     if (method === "GET") {
         return new Promise<T>((resolve, reject) => {

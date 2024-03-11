@@ -3,36 +3,28 @@ import * as monaco from 'monaco-editor';
 import { Editor } from '@monaco-editor/react';
 import EditorSidePanel from './Components/EditorSidePanel';
 import './styles/CodeEditor.scss';
-import { sendRequest } from './ServerApi';
-
+import { Project, ProjectResponse, sendRequest } from './ServerApi';
+import { useParams } from 'react-router-dom';
 export const EditorContext = React.createContext<{ editor: monaco.editor.IStandaloneCodeEditor | null, setCurrentFile: React.Dispatch<React.SetStateAction<string>> }>({ editor: null, setCurrentFile: () => { } });
 
 export default function CodeEditor() {
   const [editor, setEditor] = React.useState<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const [currentFile, setCurrentFile] = React.useState<string>('file1.py');
+  const [currentFile, setCurrentFile] = React.useState<string>(null!);
+  const [files, setFiles] = React.useState<string[]>([]);
+  const [project, setProject] = React.useState<Project>(null!);
 
-  const files = {
-    'file1.py': {
-      name: 'file1.py',
-      language: 'python',
-      value: 'print("Hello, Ita!")'
-    },
-    'file2.py': {
-      name: 'file2.py',
-      language: 'python',
-      value: 'print("Goodbye, Pita!")'
-    },
-    'file3.py': {
-      name: 'file3.py',
-      language: 'python',
-      value: 'print("Hello, Mr!")'
-    },
-    '': {
-      name: '',
-      language: '',
-      value: 'Type something here...'
-    }
-  }
+  const project_id = useParams();
+
+
+  React.useEffect(() => {
+    sendRequest<ProjectResponse>(`/api/project/${project_id}`, 'GET')
+      .then((res) => {
+        if (res.success) {
+          setProject(res.data.project);
+          setFiles(res.data.project.files);
+        }
+      })
+  })
 
   const file = files[currentFile];
 

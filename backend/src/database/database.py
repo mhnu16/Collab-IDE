@@ -14,7 +14,7 @@ from sqlalchemy import (
     select,
     update,
 )
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker, relationship
 
 from typing import Type, TypeVar, Any
 
@@ -35,6 +35,7 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
 
+
     def __repr__(self) -> str:
         return f"<User(username={self.username}, email={self.email})>"
 
@@ -51,7 +52,7 @@ class User(Base):
 
 class Session(Base):
     """
-    A class that represents a session.
+    A class that represents a session in the database.
     It's used for authenticating users upon attempted access to the website.
     """
 
@@ -81,7 +82,85 @@ class Session(Base):
         }
 
 
-tables = TypeVar("tables", User, Session)
+class Project(Base):
+    """
+    A class that represents a project in the database.
+    It's used for storing project information.
+    """
+
+    __tablename__ = "projects"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    project_id = Column(String, nullable=False, unique=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    language = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    directory = Column(
+        String, nullable=False
+    )  # The directory where the project's files are stored
+
+    allowed_users = relationship(
+        "User", secondary="allowed_users", back_populates="projects"
+    )
+
+    def __repr__(self) -> str:
+        return f"<Project(project_id={self.project_id}, name={self.name}, description={self.description}, language={self.language}, created_at={self.created_at})>"
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Returns the project as a dictionary.
+        """
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "name": self.name,
+            "description": self.description,
+            "language": self.language,
+            "created_at": self.created_at,
+            "allowed_users": self.get_allowed_users(),
+            "structure": self.get_structure(),
+        }
+
+    def get_structure(self, path=directory) -> dict[str, Any]:
+        """
+        Returns the structure of the project's filesystem as a dictionary.
+        """
+        structure = {}
+        directory = str(path)
+        for item in os.listdir(directory):
+            item_path = os.path.join(directory, item)
+            if os.path.isdir(item_path):
+                structure[item] = self.get_structure(item_path)
+            else:
+                structure[item] = None
+
+        return structure
+
+    def get_allowed_users(self) -> list[dict[str, Any]]:
+        """
+        Returns the allowed users of the project as a list of dictionaries.
+        """
+        return [user.to_dict() for user in self.allowed_users]
+
+
+class AllowedUsers(Base):
+    """
+    A class that represents the allowed users of a project in the database.
+    It's used for storing the allowed users of a project.
+    """
+
+    __tablename__ = "allowed_users"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<AllowedUsers(project_id={self.project_id}, user_id={self.user_id})>"
+
+
+tables = TypeVar("tables", User, Session, Project, AllowedUsers)
 
 
 class Database:
@@ -134,6 +213,65 @@ class Database:
             session = Session(session_id=session_id, user_id=user_id)
             db_session.add(session)
             return session_id
+
+    def add_project(
+        self,
+        project_id: str,
+        name: str,
+        description: str,
+        language: str,
+        user_id: str,
+    ) -> int:
+        """
+        Adds a project to the database.
+        Automatically adds the user to the allowed users of the project.
+        Creates a directory for the project based on the project_id.
+
+        Args:
+            project_id: The id of the project.
+            name: The name of the project.
+            description: The description of the project.
+            language: The language of the project.
+            user_id: The id of the user who created the project.
+
+        Returns:
+            The id of the project if the project was added successfully, -1 otherwise.
+        """
+        with self.__open_session() as db_session:
+            directory = os.path.join(DATABASE.PROJECTS_PATH, project_id)
+            os.makedirs(directory, exist_ok=True)
+
+            project = Project(
+                project_id=project_id,
+                name=name,
+                description=description,
+                language=language,
+                directory=directory,
+            )
+            db_session.add(project)
+
+            allowed_user = AllowedUsers(project_id=project.id, user_id=user_id)
+            db_session.add(allowed_user)
+
+        project = self.select_from(Project, Project.project_id == project_id)
+        if project is None:
+            # If the project was not added successfully, delete the directory
+            os.rmdir(directory)
+            return -1
+
+        return project.id
+
+    def add_allowed_user(self, project_id: int, user_id: int) -> None:
+        """
+        Adds a user to the allowed users of a project.
+
+        Args:
+            project_id: The id of the project.
+            user_id: The id of the user.
+        """
+        with self.__open_session() as db_session:
+            allowed_user = AllowedUsers(project_id=project_id, user_id=user_id)
+            db_session.add(allowed_user)
 
     def validate_session(self, session_id: str) -> bool:
         """

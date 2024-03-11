@@ -19,7 +19,7 @@ export default function App() {
               <Home />
             </ProtectedRoute>
           } />
-          <Route path="/editor" element={
+          <Route path="/project/:id" element={
             <ProtectedRoute>
               <CodeEditor />
             </ProtectedRoute>

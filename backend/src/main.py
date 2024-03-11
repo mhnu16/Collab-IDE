@@ -7,13 +7,13 @@ class Server:
         self.database = Database()
         self.api = ApiServer(self.database)
 
-    def run(self):
-        self.api.serve(debug=True)
+    def run(self, debug=True):
+        self.api.serve(debug)
 
 
 def main():
     server = Server()
-    server.run()
+    server.run(debug=True)
 
 
 if __name__ == "__main__":

@@ -54,6 +54,19 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+select {
+  border-radius: 8px;
+  border: 2px solid $border-color;
+  padding: 0.6em 1.2em;
+  margin: 0.5em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: $background-color-secondary;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
 label {
   font-size: 20px;
   font-family: $font-family;
@@ -66,10 +79,18 @@ label {
   align-items: center;
 }
 
+.container-row {
+  @extend .container;
+  flex-direction: row;
+}
+
 .panel {
   @extend .container;
-  padding: 1em;
+
+  padding: 2em;
+  border: 2px solid $border-color;
   border-radius: 8px;
+  background-color: $background-color-secondary;
 }
 
 .error-label {
