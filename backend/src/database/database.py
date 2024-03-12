@@ -2,7 +2,7 @@ import datetime
 import os
 from hashlib import sha256
 
-from const import DATABASE
+from utils.const import DATABASE
 
 from sqlalchemy import (
     Column,
@@ -10,17 +10,27 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Table,
     create_engine,
     select,
     update,
+    delete,
 )
-from sqlalchemy.orm import DeclarativeBase, sessionmaker, relationship
+from sqlalchemy.orm import DeclarativeBase, sessionmaker, relationship, joinedload
 
 from typing import Type, TypeVar, Any
 
 
 class Base(DeclarativeBase):
     pass
+
+
+AllowedUsers = Table(
+    "allowed_users",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id")),
+    Column("project_id", Integer, ForeignKey("projects.id")),
+)
 
 
 class User(Base):
@@ -35,6 +45,11 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
 
+    projects = relationship(
+        "Project",
+        secondary="allowed_users",
+        back_populates="allowed_users",
+    )
 
     def __repr__(self) -> str:
         return f"<User(username={self.username}, email={self.email})>"
@@ -101,7 +116,9 @@ class Project(Base):
     )  # The directory where the project's files are stored
 
     allowed_users = relationship(
-        "User", secondary="allowed_users", back_populates="projects"
+        "User",
+        secondary="allowed_users",
+        back_populates="projects",
     )
 
     def __repr__(self) -> str:
@@ -144,23 +161,7 @@ class Project(Base):
         return [user.to_dict() for user in self.allowed_users]
 
 
-class AllowedUsers(Base):
-    """
-    A class that represents the allowed users of a project in the database.
-    It's used for storing the allowed users of a project.
-    """
-
-    __tablename__ = "allowed_users"
-
-    id = Column(Integer, primary_key=True, nullable=False)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-
-    def __repr__(self) -> str:
-        return f"<AllowedUsers(project_id={self.project_id}, user_id={self.user_id})>"
-
-
-tables = TypeVar("tables", User, Session, Project, AllowedUsers)
+tables = TypeVar("tables", User, Session, Project)
 
 
 class Database:
@@ -250,9 +251,6 @@ class Database:
             )
             db_session.add(project)
 
-            allowed_user = AllowedUsers(project_id=project.id, user_id=user_id)
-            db_session.add(allowed_user)
-
         project = self.select_from(Project, Project.project_id == project_id)
         if project is None:
             # If the project was not added successfully, delete the directory
@@ -327,8 +325,9 @@ class Database:
             *filters: The filters to apply to the WHERE clause.
         """
         with self.__open_session() as db_session:
-            user = self.select_from(table, *filters)
-            db_session.delete(user)
+            statement = delete(table).where(*filters)
+            db_session.execute(statement)
+            return
 
     def select_from(self, table: Type[tables], *filters) -> tables | None:
         """
@@ -364,7 +363,9 @@ class Database:
 
         """
         with self.__open_session() as db_session:
-            statement = select(table).where(*filters)
+            # The `joinedload("*")` option is used to load the relationships of the row
+            # Otherwise, the relationships are not loaded and an error is raised when trying to access them
+            statement = select(table).where(*filters).options(joinedload("*"))
             return db_session.execute(statement).scalar()
 
     def __open_session(self):

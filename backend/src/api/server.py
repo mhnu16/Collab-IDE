@@ -4,7 +4,7 @@ import flask
 import flask_cors
 import ssl
 
-from const import SERVER
+from utils import SERVER
 
 from database import Database, User, Session, Project
 
@@ -16,6 +16,7 @@ class ApiServer:
     def __init__(self, database: Database):
         self.database = database
         self.app = flask.Flask(__name__)
+        # TODO: Check if this is needed
         self.cors = flask_cors.CORS(
             self.app, resources={r"/api/*": {"origins": "https://localhost:3000"}}
         )
@@ -117,7 +118,7 @@ class ApiServer:
             if name and description and language:
                 project_id = os.urandom(16).hex()
                 project_id = self.database.add_project(
-                    project_id, name, description, language, user.user_id
+                    project_id, name, description, language, user.id
                 )
 
                 if project_id != -1:
@@ -135,8 +136,8 @@ class ApiServer:
                 return self.json_response(False, {"error": "Project not found"}, 404)
 
             # Check if user has access to the project
-            allowed_users = [user.user_id for user in project.allowed_users]
-            if user.user_id not in allowed_users:
+            allowed_users = [user.id for user in project.allowed_users]
+            if user.id not in allowed_users:
                 return self.json_response(False, {"error": "Access denied"}, 403)
 
             # TODO: I probably need to establish a websocket connection here, to allow for real-time communication
