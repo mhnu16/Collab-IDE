@@ -1,10 +1,12 @@
 import React from 'react';
+import './styles/CodeEditor.scss';
 import * as monaco from 'monaco-editor';
 import { Editor } from '@monaco-editor/react';
+import { Project, ProjectResponse, sendRequest } from './utils/ServerApi';
+import { useParams, useNavigate } from 'react-router-dom';
+
 import EditorSidePanel from './Components/EditorSidePanel';
-import './styles/CodeEditor.scss';
-import { Project, ProjectResponse, sendRequest } from './ServerApi';
-import { useParams } from 'react-router-dom';
+
 export const EditorContext = React.createContext<{ editor: monaco.editor.IStandaloneCodeEditor | null, setCurrentFile: React.Dispatch<React.SetStateAction<string>> }>({ editor: null, setCurrentFile: () => { } });
 
 export default function CodeEditor() {
@@ -12,6 +14,7 @@ export default function CodeEditor() {
   const [currentFile, setCurrentFile] = React.useState<string>(null!);
   const [files, setFiles] = React.useState<string[]>([]);
   const [project, setProject] = React.useState<Project>(null!);
+  const navigate = useNavigate();
 
   const project_id = useParams();
 
@@ -20,10 +23,16 @@ export default function CodeEditor() {
     sendRequest<ProjectResponse>(`/api/project/${project_id}`, 'GET')
       .then((res) => {
         if (res.success) {
-          setProject(res.data.project);
-          setFiles(res.data.project.files);
+          setProject(res.data);
+          setFiles(Object.keys(res.data.structure));
         }
-      })
+      }).catch((err) => {
+        console.log(err);
+        if (err.status === 403) {
+          // Displays the 403 page if the user is not authorized to view the project
+          navigate('/403');
+        }
+      });
   })
 
   const file = files[currentFile];

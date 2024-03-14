@@ -1,18 +1,16 @@
 import jquery from "jquery";
 
-interface SuccessApiResponse {
+interface SuccessResponse<T> {
     success: true;
-    data: any;
+    data: T;
 }
 
-interface FailedApiResponse {
+interface FailedResponse {
     success: false;
     data: {
         error: string;
-    }
+    };
 }
-
-export type ApiResponse = SuccessApiResponse | FailedApiResponse;
 
 export interface User {
     id: number;
@@ -20,32 +18,33 @@ export interface User {
     username: string;
 }
 
-interface SuccessUserResponse extends SuccessApiResponse {
-    data: {
-        user: User;
-    }
+interface FileSystemObject {
+    // A map of the filesystem. The key is the name of the file or directory, 
+    // and the value is null if it is a file, or another FileSystemObject if it is a directory (recursively defined)
+    [key: string]: null | FileSystemObject;
 }
-
-export type UserResponse = SuccessUserResponse | FailedApiResponse;
 
 export interface Project {
     id: string;
-    project_id: string,
-    name: string,
-    description: string,
-    language: string,
-    created_at: Date,
-    last_updated_at: Date,
-    allowed_users: string[]
+    project_id: string;
+    name: string;
+    description: string;
+    language: string;
+    created_at: Date;
+    last_updated_at: Date;
+    allowed_users: User[];
+    structure: FileSystemObject;
 }
 
-interface SuccessProjectResponse extends SuccessApiResponse {
-    data: {
-        project: Project;
-    }
+export interface Projects {
+    projects: Project[];
 }
 
-export type ProjectResponse = SuccessProjectResponse | FailedApiResponse;
+type Resp<T> = SuccessResponse<T> | FailedResponse;
+export type ApiResponse = Resp<any>;
+export type UserResponse = Resp<User>;
+export type ProjectResponse = Resp<Project>;
+export type ProjectsResponse = Resp<Projects>;
 
 export function sendRequest<T extends ApiResponse>(url: string, method: string, data?: any): Promise<T> {
     if (method === "POST") {
