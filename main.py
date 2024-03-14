@@ -26,7 +26,7 @@ def main(dev_mode=False):
         os.system(cmd_prefix + vit_cmd)
 
         os.chdir(os.path.join(root, "backend", "src"))
-        py_cmd = "python -m main.py"
+        py_cmd = "python main.py"
         os.system(cmd_prefix + py_cmd)
 
 

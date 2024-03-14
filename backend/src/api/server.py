@@ -128,6 +128,22 @@ class ApiServer:
                     return self.json_response(True, {"project": project.to_dict()})
             return self.json_response(False, {"error": "Failed to create project"})
 
+        @self.app.route("/api/projects/<project_id>", methods=["DELETE"])
+        def delete_project(project_id):
+            user = flask.g.user
+            project = self.database.select_from(Project, Project.id == project_id)
+            if not project:
+                return self.json_response(False, {"error": "Project not found"}, 404)
+
+            # Check if user has access to the project
+            allowed_users = [user.id for user in project.allowed_users]
+            if user.id not in allowed_users:
+                return self.json_response(False, {"error": "Access denied"}, 403)
+
+            self.database.delete_from(Project, Project.id == project_id)
+
+            return self.json_response(True, {})
+
         @self.app.route("/api/projects/<project_id>", methods=["GET"])
         def project(project_id):
             user = flask.g.user

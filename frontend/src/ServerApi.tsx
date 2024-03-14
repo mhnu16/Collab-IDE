@@ -48,22 +48,7 @@ interface SuccessProjectResponse extends SuccessApiResponse {
 export type ProjectResponse = SuccessProjectResponse | FailedApiResponse;
 
 export function sendRequest<T extends ApiResponse>(url: string, method: string, data?: any): Promise<T> {
-    if (method === "GET") {
-        return new Promise<T>((resolve, reject) => {
-            jquery.ajax({
-                url: url,
-                method: method,
-                data: data,
-                success: (res: T) => {
-                    resolve(res);
-                },
-                error: (err) => {
-                    reject(err);
-                },
-            });
-        });
-    }
-    else {
+    if (method === "POST") {
         return new Promise<T>((resolve, reject) => {
             jquery.ajax({
                 url: url,
@@ -79,4 +64,16 @@ export function sendRequest<T extends ApiResponse>(url: string, method: string, 
             });
         });
     }
+    return new Promise<T>((resolve, reject) => {
+        jquery.ajax({
+            url: url,
+            method: method,
+            success: (res: T) => {
+                resolve(res);
+            },
+            error: (err) => {
+                reject(err);
+            }
+        });
+    });
 }
