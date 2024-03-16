@@ -25,4 +25,7 @@ class DATABASE:
         os.path.dirname(__file__), "..", "database", "database.sqlite"
     )
     PROJECTS_PATH: str = "projects"
+    PATH_PREFIX: str = os.path.join(
+        os.path.dirname(__file__), "..", "database"
+    )
     SESSION_IDLE_TIMEOUT: datetime.timedelta = datetime.timedelta(weeks=1)

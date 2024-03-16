@@ -6,6 +6,7 @@ from utils.const import DATABASE
 
 from sqlalchemy import (
     Column,
+    ColumnExpressionArgument,
     DateTime,
     ForeignKey,
     Integer,
@@ -16,9 +17,11 @@ from sqlalchemy import (
     update,
     delete,
 )
-from sqlalchemy.orm import DeclarativeBase, sessionmaker, relationship, joinedload
+from sqlalchemy.orm import DeclarativeBase, sessionmaker, relationship, scoped_session
 
 from typing import Type, TypeVar, Any
+
+from contextlib import contextmanager
 
 
 class Base(DeclarativeBase):
@@ -31,6 +34,36 @@ AllowedUsers = Table(
     Column("user_id", Integer, ForeignKey("users.id")),
     Column("project_id", Integer, ForeignKey("projects.id")),
 )
+
+
+class Session(Base):
+    """
+    A class that represents a session in the database.
+    It's used for authenticating users upon attempted access to the website.
+    """
+
+    __tablename__ = "sessions"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    session_id = Column(String, nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.now(), nullable=False)
+    last_accessed_at = Column(DateTime, default=datetime.datetime.now(), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<Session(session_id={self.session_id}, user_id={self.user_id}, created_at={self.created_at}, last_accessed_at={self.last_accessed_at})>"
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Returns the session as a dictionary.
+        """
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "user_id": self.user_id,
+            "created_at": self.created_at,
+            "last_accessed_at": self.last_accessed_at,
+        }
 
 
 class User(Base):
@@ -65,38 +98,6 @@ class User(Base):
         }
 
 
-class Session(Base):
-    """
-    A class that represents a session in the database.
-    It's used for authenticating users upon attempted access to the website.
-    """
-
-    __tablename__ = "sessions"
-
-    id = Column(Integer, primary_key=True, nullable=False)
-    session_id = Column(String, nullable=False, unique=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-    last_accessed_at = Column(
-        DateTime, default=datetime.datetime.utcnow, nullable=False
-    )
-
-    def __repr__(self) -> str:
-        return f"<Session(session_id={self.session_id}, user_id={self.user_id}, created_at={self.created_at}, last_accessed_at={self.last_accessed_at})>"
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Returns the session as a dictionary.
-        """
-        return {
-            "id": self.id,
-            "session_id": self.session_id,
-            "user_id": self.user_id,
-            "created_at": self.created_at,
-            "last_accessed_at": self.last_accessed_at,
-        }
-
-
 class Project(Base):
     """
     A class that represents a project in the database.
@@ -110,7 +111,7 @@ class Project(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=False)
     language = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.now(), nullable=False)
     directory = Column(
         String, nullable=False
     )  # The directory where the project's files are stored
@@ -122,7 +123,7 @@ class Project(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Project(project_id={self.project_id}, name={self.name}, description={self.description}, language={self.language}, created_at={self.created_at})>"
+        return f"<Project(project_id={self.project_id}, name={self.name}, description={self.description}, language={self.language}, created_at={self.created_at}, directory={self.directory})>"
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -139,12 +140,14 @@ class Project(Base):
             "structure": self.get_structure(),
         }
 
-    def get_structure(self, path=directory) -> dict[str, Any]:
+    def get_structure(self, path: str | None = None) -> dict[str, Any]:
         """
         Returns the structure of the project's filesystem as a dictionary.
         """
+        directory = str(path or self.directory)
+
         structure = {}
-        directory = str(path)
+
         for item in os.listdir(directory):
             item_path = os.path.join(directory, item)
             if os.path.isdir(item_path):
@@ -167,12 +170,30 @@ tables = TypeVar("tables", User, Session, Project)
 class Database:
     """
     A class that represents a database.
-    It acts as an interface between the server and the database.
+    It's used for interacting with the database.
+    When attempting to use this class, it's required to use the `with` statement, unless specified otherwise.
     """
 
     def __init__(self) -> None:
         self.engine = create_engine("sqlite:///" + DATABASE.DB_PATH, echo=False)
         Base.metadata.create_all(self.engine)
+        self.Session = scoped_session(sessionmaker(bind=self.engine))
+
+    @contextmanager
+    def session_scope(self):
+        """
+        Provides a transactional scope around a series of operations.
+        """
+        session = self.Session()
+        try:
+            yield None
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+            self.Session.remove()
 
     def add_user(self, username: str, email: str, password: str) -> int:
         """
@@ -189,91 +210,79 @@ class Database:
         Returns:
             The id of the user if the user was added successfully, -1 otherwise.
         """
-        with self.__open_session() as db_session:
-            password = self.hash_sha256(password)
-            user = User(username=username, email=email, password=password)
-            db_session.add(user)
+        self.__in_session()
+
+        hashed_password = self.hash_sha256(password)
+        user = User(username=username, email=email, password=hashed_password)
+        self.Session.add(user)
 
         user = self.select_from(User, User.username == username)
-        if user is None:
-            return -1
-        return user.id
+        if user:
+            return user.id
+        return -1
 
-    def add_session(self, user_id: int) -> str:
+    def add_session(self, user_id: int) -> str | None:
         """
         Adds a session to the database.
 
         Args:
-            user_id: The id of the user to create a session for.
+            user_id: The id of the user.
 
         Returns:
-            The session id.
+            The session_id if the session was added successfully, None otherwise.
         """
-        with self.__open_session() as db_session:
-            session_id = self.__generate_session_id()
-            session = Session(session_id=session_id, user_id=user_id)
-            db_session.add(session)
-            return session_id
+        self.__in_session()
+
+        session_id = self.generate_id()
+        session = Session(session_id=session_id, user_id=user_id)
+        self.Session.add(session)
+
+        session = self.select_from(Session, Session.session_id == session_id)
+        if session:
+            return session.session_id
+        return None
 
     def add_project(
-        self,
-        project_id: str,
-        name: str,
-        description: str,
-        language: str,
-        user_id: str,
+        self, project_id: str, name: str, description: str, language: str, user_id: int
     ) -> int:
-        """
-        Adds a project to the database.
-        Automatically adds the user to the allowed users of the project.
-        Creates a directory for the project based on the project_id.
 
-        Args:
-            project_id: The id of the project.
-            name: The name of the project.
-            description: The description of the project.
-            language: The language of the project.
-            user_id: The id of the user who created the project.
+        self.__in_session()
 
-        Returns:
-            The id of the project if the project was added successfully, -1 otherwise.
-        """
-        with self.__open_session() as db_session:
-            directory = os.path.join(DATABASE.PROJECTS_PATH, project_id)
-            os.makedirs(directory, exist_ok=True)
+        directory = os.path.join(DATABASE.PROJECTS_PATH, project_id)
+        os.makedirs(directory, exist_ok=True)
 
-            project = Project(
-                project_id=project_id,
-                name=name,
-                description=description,
-                language=language,
-                directory=directory,
-            )
-            db_session.add(project)
+        project = Project(
+            project_id=project_id,
+            name=name,
+            description=description,
+            language=language,
+            directory=directory,
+        )
+        self.Session.add(project)
 
         project = self.select_from(Project, Project.project_id == project_id)
-        if project is None:
-            # If the project was not added successfully, delete the directory
-            os.rmdir(directory)
-            return -1
+        if project:
+            self.add_allowed_user(project.id, user_id)
+            return project.id
 
-        return project.id
+        # If the project was not added successfully, delete the directory
+        os.rmdir(directory)
+        return -1
 
     def add_allowed_user(self, project_id: int, user_id: int) -> None:
-        """
-        Adds a user to the allowed users of a project.
+        self.__in_session()
 
-        Args:
-            project_id: The id of the project.
-            user_id: The id of the user.
-        """
-        with self.__open_session() as db_session:
-            allowed_user = AllowedUsers(project_id=project_id, user_id=user_id)
-            db_session.add(allowed_user)
+        project = self.select_from(Project, Project.id == project_id)
+        user = self.select_from(User, User.id == user_id)
+        if project and user:
+            statement = AllowedUsers.insert().values(
+                user_id=user_id, project_id=project_id
+            )
+            self.Session.execute(statement)
 
     def validate_session(self, session_id: str) -> bool:
         """
-        Validates a session.
+        Validates a session by checking if it exists AND if it hasn't expired.
         Updates the session's last_accessed_at field if the session is valid.
         Otherwise, deletes the session from the database.
 
@@ -283,53 +292,30 @@ class Database:
         Returns:
             True if the session is valid, False otherwise.
         """
-        # Get the session from the database
+        self.__in_session()
+
         session = self.select_from(Session, Session.session_id == session_id)
+        if session:
+            last_accessed_at = session.last_accessed_at
+            # The time passed since the session was last accessed is less than the session idle timeout
+            if (
+                datetime.datetime.now() - last_accessed_at
+            ) < DATABASE.SESSION_IDLE_TIMEOUT:
+                statement = (
+                    update(Session)
+                    .where(Session.session_id == session_id)
+                    .values(last_accessed_at=datetime.datetime.now())
+                )
+                self.Session.execute(statement)
 
-        if session is None:
-            return False
+                return True
 
-        # Check if the session is expired
-        if (
-            datetime.datetime.now() - session.last_accessed_at
-            > DATABASE.SESSION_IDLE_TIMEOUT
-        ):
-            # If the session is expired, delete it from the database
             self.delete_from(Session, Session.session_id == session_id)
-            return False
+        return False
 
-        # Update the session's last_accessed_at field
-        self.__update_session(session_id)
-        return True
-
-    def __update_session(self, session_id: str) -> None:
-        """
-        Updates a session's last_accessed_at field.
-        """
-        with self.__open_session() as db_session:
-            statement = (
-                update(Session)
-                .filter_by(session_id=session_id)
-                .values(last_accessed_at=datetime.datetime.now())
-            )
-            db_session.execute(statement)
-
-    def delete_from(self, table: Type[tables], *filters) -> None:
-        """
-        Deletes a row from the database.
-
-        Internally, it calls the `self.select_from` method to get the row to delete.
-
-        Args:
-            table: The table to delete from.
-            *filters: The filters to apply to the WHERE clause.
-        """
-        with self.__open_session() as db_session:
-            statement = delete(table).where(*filters)
-            db_session.execute(statement)
-            return
-
-    def select_from(self, table: Type[tables], *filters) -> tables | None:
+    def select_from(
+        self, table: Type[tables], *filters: ColumnExpressionArgument[bool]
+    ) -> tables | None:
         """
         Gets the first column and row that matches the filters.
 
@@ -362,38 +348,60 @@ class Database:
             The found row if it exists, None otherwise.
 
         """
-        with self.__open_session() as db_session:
-            # The `joinedload("*")` option is used to load the relationships of the row
-            # Otherwise, the relationships are not loaded and an error is raised when trying to access them
-            statement = select(table).where(*filters).options(joinedload("*"))
-            return db_session.execute(statement).scalar()
+        self.__in_session()
 
-    def __open_session(self):
+        query = select(table).filter(*filters)
+        result = self.Session.execute(query).scalar()
+        return result
+
+    def delete_from(
+        self, table: Type[tables], *filters: ColumnExpressionArgument[bool]
+    ) -> None:
         """
-        Gets a session from the database.
+        Deletes a row from the database.
+
+        Internally, it calls the `self.select_from` method to get the row to delete.
+
+        Args:
+            table: The table to delete from.
+            *filters: The filters to apply to the WHERE clause.
         """
-        # expire_on_commit=False prevents the session from being closed after a commit
-        # This makes it so when we try and access the data we got from the session, we don't try and access a closed session
-        Session = sessionmaker(bind=self.engine, expire_on_commit=False)
-        return Session.begin()
+        self.__in_session()
+
+        row = self.select_from(table, *filters)
+        if row:
+            self.Session.delete(row)
+
+    def __in_session(self):
+        if not self.Session:
+            raise Exception("Not in session")
+        elif self.Session.is_active:
+            return True
+        return False
 
     @staticmethod
-    def __generate_session_id() -> str:
+    def generate_id() -> str:
         """
-        Generates a session id.
+        Generates a random id.
+
+        Note:
+            Does not require a database session.
 
         Returns:
-            A session id - a hexadecimal string.
+            A random id - a hexadecimal string.
         """
         return os.urandom(16).hex()
 
     @staticmethod
     def hash_sha256(password: str) -> str:
         """
-        Hashes the password.
+        Hashes a password using the SHA-256 algorithm.
+
+        Note:
+            Does not require a database session.
 
         Args:
-            password - string: The password to hash.
+            password: The password to hash.
 
         Returns:
             The hashed password - a hexadecimal string.

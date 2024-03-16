@@ -25,8 +25,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .then((response) => {
                 if (response.success) {
                     console.log("Login successful");
-                    console.log(response.data.user);
-                    setUser(response.data.user);
+                    console.log(response.data);
+                    setUser(response.data);
                 }
                 return response;
             })
@@ -54,8 +54,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .then((response) => {
                 if (response.success) {
                     console.log("Register successful");
-                    console.log(response.data.user);
-                    setUser(response.data.user);
+                    console.log(response.data);
+                    setUser(response.data);
                 }
                 return response;
             })
@@ -69,12 +69,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return sendRequest<UserResponse>('/api/user', 'GET')
             .then((response) => {
                 if (response.success) {
-                    setUser(response.data.user);
+                    setUser(response.data);
                 }
+                return response;
             })
-            .catch((error) => {
-                console.error("Check user failed: " + error);
-                throw error;
+            .catch((err) => {
+                if (err.status === 401) {
+                    console.error("User is not logged in!");
+                }
+                else {
+                    console.error("Check user failed: " + err);
+                }
             });
     }
 
