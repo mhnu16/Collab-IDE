@@ -195,7 +195,7 @@ class Database:
             session.close()
             self.Session.remove()
 
-    def add_user(self, username: str, email: str, password: str) -> int:
+    def add_user(self, username: str, email: str, password: str) -> User | None:
         """
         Adds a user to the database.
 
@@ -208,7 +208,7 @@ class Database:
             password: The password of the user.
 
         Returns:
-            The id of the user if the user was added successfully, -1 otherwise.
+            The user if the user was added successfully, None otherwise.
         """
         self.__in_session()
 
@@ -218,10 +218,10 @@ class Database:
 
         user = self.select_from(User, User.username == username)
         if user:
-            return user.id
-        return -1
+            return user
+        return None
 
-    def add_session(self, user_id: int) -> str | None:
+    def add_session(self, user_id: int) -> Session | None:
         """
         Adds a session to the database.
 
@@ -229,7 +229,7 @@ class Database:
             user_id: The id of the user.
 
         Returns:
-            The session_id if the session was added successfully, None otherwise.
+            The session if the session was added successfully, None otherwise.
         """
         self.__in_session()
 
@@ -239,12 +239,25 @@ class Database:
 
         session = self.select_from(Session, Session.session_id == session_id)
         if session:
-            return session.session_id
+            return session
         return None
 
     def add_project(
         self, project_id: str, name: str, description: str, language: str, user_id: int
-    ) -> int:
+    ) -> Project | None:
+        """
+        Adds a project to the database.
+
+        Args:
+            project_id: The id of the project.
+            name: The name of the project.
+            description: The description of the project.
+            language: The language of the project.
+            user_id: The id of the user. (The user that created the project)
+
+        Returns:
+            The project if the project was added successfully, None otherwise.
+        """
 
         self.__in_session()
 
@@ -263,11 +276,11 @@ class Database:
         project = self.select_from(Project, Project.project_id == project_id)
         if project:
             self.add_allowed_user(project.id, user_id)
-            return project.id
+            return project
 
         # If the project was not added successfully, delete the directory
         os.rmdir(directory)
-        return -1
+        return None
 
     def add_allowed_user(self, project_id: int, user_id: int) -> None:
         self.__in_session()

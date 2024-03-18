@@ -47,7 +47,6 @@ export default function Home() {
 
   function ProjectForm({ setOpen }: { setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [error, setError] = React.useState("");
-    const navigate = useNavigate();
 
     const formik = useFormik({
       initialValues: {
@@ -64,7 +63,9 @@ export default function Home() {
       sendRequest<ProjectResponse>("/api/projects", "POST", values)
         .then((res) => {
           if (res.success) {
-            navigate(`/projects/${res.data.project_id}`);
+            console.log(res.data);
+            setProjects([...projects, res.data]);
+            setOpen(false);
           }
           else {
             console.error(res.data.error);
@@ -155,7 +156,7 @@ export default function Home() {
       <div className='card'>
         <h2>{project.name}</h2>
         <p>{project.description}</p>
-        <button onClick={() => navigate(`/project/${project.project_id}`)}>Open</button>
+        <button onClick={() => navigate(`/projects/${project.project_id}`)}>Open</button>
         <button onClick={() => deleteProject(project.project_id)}>Delete</button>
       </div>
     )

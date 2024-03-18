@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const checkUser = () => {
+        console.log("Checking user...");
         return sendRequest<UserResponse>('/api/user', 'GET')
             .then((response) => {
                 if (response.success) {
@@ -80,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 else {
                     console.error("Check user failed: " + err);
                 }
+                throw err;
             });
     }
 
@@ -104,12 +106,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const auth = useAuth();
 
     React.useEffect(() => {
-        auth.checkUser().then(() => {
-            setLoading(false);
-        }).catch((error) => {
-            console.error("Check user failed: " + error);
-            setLoading(false);
-        });
+        auth.checkUser()
+            .then(() => setLoading(false))
+            .catch((err) => {
+                console.error("Error checking user: " + err);
+                setLoading(false);
+            });
     }, []);
 
     // Show a loading screen while the user is being checked

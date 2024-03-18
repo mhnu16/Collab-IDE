@@ -22,7 +22,7 @@ class SERVER:
 
 class DATABASE:
     DB_PATH: str = os.path.join(
-        os.path.dirname(__file__), "..", "database", "database.sqlite"
+        os.path.dirname(__file__), "..", "database", "database.db"
     )
     PROJECTS_PATH: str = "projects"
     PATH_PREFIX: str = os.path.join(

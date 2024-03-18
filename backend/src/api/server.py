@@ -39,12 +39,12 @@ class ApiServer:
                         User, User.email == email, User.password == password
                     )
                     if user:
-                        session_id = self.database.add_session(user.id)
+                        session = self.database.add_session(user.id)
                         # Set the session cookie
                         response = self.json_response(True, user.to_dict())
                         response.set_cookie(
                             "session_id",
-                            session_id,
+                            session.session_id,
                             httponly=True,
                             secure=True,
                             samesite="Strict",
@@ -85,14 +85,13 @@ class ApiServer:
             password = data.get("password")
             if email and username and password:
                 with self.database.session_scope():
-                    user_id = self.database.add_user(username, email, password)
-                    if user_id != -1:
-                        session_id = self.database.add_session(user_id)
-                        user = self.database.select_from(User, User.id == user_id)
+                    user = self.database.add_user(username, email, password)
+                    if user:
+                        session = self.database.add_session(user.id)
                         response = self.json_response(True, user.to_dict())
                         response.set_cookie(
                             "session_id",
-                            session_id,
+                            session.session_id,
                             httponly=True,
                             secure=True,
                             samesite="Strict",
@@ -121,15 +120,13 @@ class ApiServer:
                     user_id = flask.g.user_id
 
                     project_id = self.database.generate_id()
-                    project_id = self.database.add_project(
+                    project = self.database.add_project(
                         project_id, name, description, language, user_id
                     )
 
-                    if project_id != -1:
-                        project = self.database.select_from(
-                            Project, Project.id == project_id
-                        )
+                    if project:
                         return self.json_response(True, project.to_dict())
+                    
 
             return self.json_response(False, {"error": "Failed to create project"})
 
@@ -154,9 +151,11 @@ class ApiServer:
                 return self.json_response(True, {})
 
         @self.app.route("/api/projects/<project_id>", methods=["GET"])
-        def project(project_id):
+        def project(project_id: str):
             with self.database.session_scope():
-                project = self.database.select_from(Project, Project.id == project_id)
+                project = self.database.select_from(
+                    Project, Project.project_id == project_id
+                )
                 if not project:
                     return self.json_response(
                         False, {"error": "Project not found"}, 404
@@ -205,8 +204,6 @@ class ApiServer:
                 if not user:
                     return self.json_response(False, {"error": "User not found"}, 404)
                 flask.g.user_id = user.id
-
-            return
 
         @self.app.after_request
         def after_request(response):
