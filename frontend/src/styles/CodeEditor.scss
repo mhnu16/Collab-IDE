@@ -1,5 +1,18 @@
+@import "variables";
+
 .editor {
     display: flex;
-    height: 100vh;
+    height: 100%;
 }
 
+.editor__no-file-selected {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    font-size: 2em;
+    color: $editor-font-color;
+}

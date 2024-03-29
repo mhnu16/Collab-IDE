@@ -1,9 +1,8 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
 import './styles/CodeEditor.scss';
 import * as monaco from 'monaco-editor';
 import { Editor } from '@monaco-editor/react';
-import { Project, ProjectResponse, sendRequest } from './utils/ServerApi';
+import { Project, ProjectResponse, sendRequest, SocketManager, File } from './utils/ServerApi';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import EditorSidePanel from './Components/EditorSidePanel';
@@ -11,10 +10,13 @@ import LoadingPage from './Components/LoadingPage';
 import ErrorPage from './Components/ErrorPage';
 
 export const EditorContext = React.createContext<{ editor: monaco.editor.IStandaloneCodeEditor | null, switchFile: (file: string) => void }>({ editor: null, switchFile: () => { } });
+export const NetworkContext = React.createContext<SocketManager>(null!);
+export const ProjectContext = React.createContext<Project>(null!);
 
 export default function CodeEditor() {
   const [editor, setEditor] = React.useState<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const [files, setFiles] = React.useState<string[]>([]);
+  const [fileStructure, setFileStructure] = React.useState<string[]>([]);
+  const [file, setFile] = React.useState<File>(null!);
   const [project, setProject] = React.useState<Project>(null!);
   const navigate = useNavigate();
 
@@ -23,12 +25,17 @@ export default function CodeEditor() {
   const [errorCode, setErrorCode] = React.useState<number>(null!);
   const [loading, setLoading] = React.useState(true);
 
+  const sm = SocketManager.getInstance();
+
   React.useEffect(() => {
     sendRequest<ProjectResponse>(`/api/projects/${project_id}`, 'GET')
       .then((res) => {
         if (res.success) {
           setProject(res.data);
-          setFiles(Object.keys(res.data.structure));
+          setFileStructure(prevStructure => {
+            const newStructure = Object.keys(res.data.structure);
+            return JSON.stringify(newStructure) !== JSON.stringify(prevStructure) ? newStructure : prevStructure;
+          });
           setLoading(false);
         }
       }).catch((err) => {
@@ -46,11 +53,16 @@ export default function CodeEditor() {
           console.error(err);
         }
       });
-  }, [])
+  }, [fileStructure]);
 
-  function switchFile(file: string) {
-    navigate(`/projects/${project_id}/${file}`);
-  }
+  React.useEffect(() => {
+    if (current_file === undefined) {
+      return;
+    }
+    sm.sendEvent('getFile', { project_id, file: current_file }, (response) => {
+      setFile(response.data);
+    });
+  }, [current_file])
 
   function handleEditorDidMount(new_editor: monaco.editor.IStandaloneCodeEditor, _monaco: typeof monaco) {
     setEditor(new_editor);
@@ -67,39 +79,48 @@ export default function CodeEditor() {
     return <LoadingPage></LoadingPage>;
   }
 
-  let file: { name: string | undefined, value: string | undefined, language: string | undefined }
-
-  if (current_file === undefined) {
-    file = {
-      name: undefined,
-      value: undefined,
-      language: undefined
-    }
-  } else {
-    file = files[current_file]
-    console.log(file)
-  }
-
   return (
     <EditorContext.Provider value={{ editor, switchFile }}>
-      <div className='editor'>
-        <EditorSidePanel files={files} setFiles={setFiles}></EditorSidePanel>
-        <Editor
-          className='editor__code-editor'
+      <NetworkContext.Provider value={sm}>
+        <ProjectContext.Provider value={project}>
+          <div className='editor'>
+            <EditorSidePanel files={fileStructure} setFileStructure={setFileStructure}></EditorSidePanel>
+            {current_file === undefined ? (
+              <div className='editor__no-file-selected'>
+                <h2>No File Selected</h2>
+                <p>Please select a file from the side panel to start editing.</p>
+              </div>
+            ) : file === null ? (
+              (
+                <div className='fill-container'>
+                  <LoadingPage></LoadingPage>
+                </div>
+              )
+            ) : (
+              <Editor
+                className='editor__code-editor'
 
-          path={file.name}
-          defaultLanguage={file.language}
-          defaultValue={file.value}
+                path={file.name}
+                defaultLanguage={file.language}
+                defaultValue={file.value}
+                loading={<LoadingPage></LoadingPage>}
 
-          onMount={handleEditorDidMount}
-          theme='vs-dark'
-          options={{
-            minimap: {
-              enabled: false
-            }
-          }}
-        />
-      </div>
+                onMount={handleEditorDidMount}
+                theme='vs-dark'
+                options={{
+                  minimap: {
+                    enabled: false
+                  }
+                }}
+              />
+            )}
+          </div>
+        </ProjectContext.Provider>
+      </NetworkContext.Provider>
     </EditorContext.Provider>
   );
+
+  function switchFile(file: string) {
+    navigate(`/projects/${project_id}/${file}`, { replace: true });
+  }
 }

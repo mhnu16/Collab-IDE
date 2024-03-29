@@ -1,8 +1,5 @@
-import os
 from typing import Any
 import flask
-import flask_cors
-import ssl
 
 from utils import SERVER
 
@@ -12,14 +9,9 @@ from random import random
 
 
 class ApiServer:
-
-    def __init__(self, database: Database):
+    def __init__(self, app: flask.Flask, database: Database):
         self.database = database
-        self.app = flask.Flask(__name__)
-        # TODO: Check if this is needed
-        self.cors = flask_cors.CORS(
-            self.app, resources={r"/api/*": {"origins": "https://localhost:3000"}}
-        )
+        self.app = app
 
         @self.app.route("/api/rand")
         def rand():
@@ -126,7 +118,6 @@ class ApiServer:
 
                     if project:
                         return self.json_response(True, project.to_dict())
-                    
 
             return self.json_response(False, {"error": "Failed to create project"})
 
@@ -231,10 +222,3 @@ class ApiServer:
         return flask.make_response(
             flask.jsonify({"success": success, "data": data}), status_code
         )
-
-    def serve(self, debug=False):
-        context = ssl.SSLContext()
-        context.load_cert_chain(
-            SERVER.CERT_PATH, SERVER.KEY_PATH, SERVER.get_ssl_password()
-        )
-        self.app.run(host=SERVER.IP, port=SERVER.PORT, debug=debug, ssl_context=context)

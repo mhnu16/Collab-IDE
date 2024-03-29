@@ -19,11 +19,17 @@ export default function App() {
               <Home />
             </ProtectedRoute>
           } />
-          <Route path="/projects/:project_id/:current_file" element={
+          <Route path="/projects/:project_id" element={
             <ProtectedRoute>
               <CodeEditor />
             </ProtectedRoute>
-          } />
+          }>
+            <Route path=":current_file" element={
+              <ProtectedRoute>
+                <CodeEditor />
+              </ProtectedRoute>
+            } />
+          </Route>
         </Routes>
       </Router>
     </AuthProvider>

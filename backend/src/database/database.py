@@ -112,9 +112,7 @@ class Project(Base):
     description = Column(String, nullable=False)
     language = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.now(), nullable=False)
-    directory = Column(
-        String, nullable=False
-    )  # The directory where the project's files are stored
+    # The directory of the project in the filesystem is '/projects/{project_id}'
 
     allowed_users = relationship(
         "User",
@@ -144,7 +142,10 @@ class Project(Base):
         """
         Returns the structure of the project's filesystem as a dictionary.
         """
-        directory = str(path or self.directory)
+        directory = path or self.create_folder()
+
+        if not os.path.exists(directory):
+            return {}
 
         structure = {}
 
@@ -162,6 +163,14 @@ class Project(Base):
         Returns the allowed users of the project as a list of dictionaries.
         """
         return [user.to_dict() for user in self.allowed_users]
+
+    def create_folder(self) -> str:
+        """
+        Creates a folder in the project's directory.
+        """
+        directory = os.path.join(DATABASE.PROJECTS_PATH, str(self.project_id))
+        os.makedirs(directory, exist_ok=True)
+        return directory
 
 
 tables = TypeVar("tables", User, Session, Project)
@@ -261,25 +270,20 @@ class Database:
 
         self.__in_session()
 
-        directory = os.path.join(DATABASE.PROJECTS_PATH, project_id)
-        os.makedirs(directory, exist_ok=True)
-
         project = Project(
             project_id=project_id,
             name=name,
             description=description,
             language=language,
-            directory=directory,
         )
         self.Session.add(project)
 
         project = self.select_from(Project, Project.project_id == project_id)
         if project:
             self.add_allowed_user(project.id, user_id)
+            project.create_folder()
             return project
 
-        # If the project was not added successfully, delete the directory
-        os.rmdir(directory)
         return None
 
     def add_allowed_user(self, project_id: int, user_id: int) -> None:

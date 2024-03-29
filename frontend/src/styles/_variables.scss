@@ -13,6 +13,8 @@ $hover-color-dark: #535bf2;
 $hover-color-light: #747bff;
 $error-color: #fa1111;
 
+$editor-font-color: #888888;
+
 $font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 $background-color: $background-color-dark;
 $background-color-secondary: $background-color-secondary-dark;
@@ -20,10 +22,10 @@ $font-color: $font-color-dark;
 $border-color: $border-color-dark;
 $hover-color: $hover-color-dark;
 
-@media (prefers-color-scheme: light) {
-    $background-color: $background-color-light;
-    $background-color-secondary: $background-color-secondary-light;
-    $font-color: $font-color-light;
-    $border-color: $border-color-light;
-    $hover-color: $hover-color-light;
-}
+// @media (prefers-color-scheme: light) {
+//     $background-color: $background-color-light;
+//     $background-color-secondary: $background-color-secondary-light;
+//     $font-color: $font-color-light;
+//     $border-color: $border-color-light;
+//     $hover-color: $hover-color-light;
+// }
