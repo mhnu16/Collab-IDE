@@ -8,8 +8,6 @@ class SERVER:
     )
     IP: str = "127.0.0.1"
     PORT: int = 5000
-    CERT_PATH: str = os.path.join(os.path.dirname(__file__), "..", "certs", "cert.pem")
-    KEY_PATH: str = os.path.join(os.path.dirname(__file__), "..", "certs", "key.pem")
     COOKIE_MAX_AGE: datetime.timedelta = datetime.timedelta(weeks=1)
 
     @staticmethod

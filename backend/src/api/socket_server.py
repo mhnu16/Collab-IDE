@@ -12,13 +12,9 @@ class SocketServer:
 
         @self.socketio.on("connect")
         def on_connect():
-            print("Client connected")
+            print(f"{"-":>10} Client connected")
 
     def start(self, debug=False):
-        context = ssl.SSLContext()
-        context.load_cert_chain(
-            SERVER.CERT_PATH, SERVER.KEY_PATH, SERVER.get_ssl_password()
-        )
         self.socketio.run(
             self.app,
             host=SERVER.IP,
@@ -26,5 +22,4 @@ class SocketServer:
             debug=debug,
             use_reloader=debug,
             log_output=debug,
-            ssl_context=context,
         )
