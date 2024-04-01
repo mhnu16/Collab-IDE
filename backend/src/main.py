@@ -1,3 +1,4 @@
+import sys
 import flask
 
 from database import Database
@@ -16,8 +17,14 @@ class Server:
 
 
 def main():
-    server = Server()
-    server.run(debug=True)
+    if len(sys.argv) > 1 and sys.argv[1] == "--dev":
+        print("Starting in development mode")
+        server = Server()
+        server.run(debug=True)
+    else:
+        print("Starting in production mode")
+        server = Server()
+        server.run(debug=False)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import jquery from "jquery";
+import { io, Socket } from 'socket.io-client';
 
 interface SuccessResponse<T> {
     success: true;
@@ -85,33 +86,34 @@ export interface File {
     language: string;
 }
 
+
 export class SocketManager {
-    private socket: WebSocket;
+    private socket: Socket;
     private static instance: SocketManager;
     private static eventHandlers: Map<string, ((response: ApiResponse) => any)> = new Map();
 
     private constructor() {
         try {
-            this.socket = new WebSocket("ws://localhost:8000");
-            console.log("Attempting to connect to server via websocket");
-            this.socket.onopen = () => {
-                console.log("Connected to server via websocket");
-            };
+            this.socket = io("https://localhost:5000");
+            console.log("Attempting to connect to server via socket.io");
 
-            this.socket.onmessage = (msg) => {
-                const event = JSON.parse(msg.data);
+            this.socket.on('connect', () => {
+                console.log("Connected to server via socket.io");
+            });
+
+            this.socket.on('message', (msg) => {
+                const event = JSON.parse(msg);
                 const handler = SocketManager.eventHandlers.get(event.eventName);
                 if (handler) {
                     handler(event.data);
                 } else {
                     console.error(`No handler for event: ${event.eventName}`);
                 }
-            };
+            });
         } catch (error) {
             console.error(`Failed to create socket, the following error occurred: ${error}`);
             throw error;
         }
-
     }
 
     public static getInstance(): SocketManager {
@@ -123,16 +125,13 @@ export class SocketManager {
 
     public sendEvent(eventName: string, msg: any, callback?: (response: ApiResponse) => void) {
         try {
-            if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            if (!this.socket.connected) {
                 console.error("Socket is not open!");
                 return;
             }
             msg = JSON.stringify(msg);
 
-            this.socket.send(JSON.stringify({
-                eventName: eventName,
-                data: msg
-            }));
+            this.socket.emit(eventName, msg);
             if (callback) {
                 this.onEvent(eventName, callback);
             }

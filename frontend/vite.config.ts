@@ -15,6 +15,11 @@ let server_config = {
       target: "https://localhost:5000",
       secure: false, // Doesn't verify the certificate because it's self-signed
     },
+    "/socket.io": {
+      target: "https://localhost:5000",
+      secure: false, // Doesn't verify the certificate because it's self-signed
+      ws: true,
+    },
   },
 };
 
