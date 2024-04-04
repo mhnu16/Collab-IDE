@@ -1,7 +1,5 @@
 import os
 import subprocess as sp
-import sys
-import ctypes
 
 
 def check_dependency(cmd):
@@ -12,19 +10,10 @@ def check_dependency(cmd):
         exit(1)
 
 def start(lst, cmd):
-    if sys.platform == "win32":
-        # Create a new console window
-        ctypes.windll.kernel32.FreeConsole()
-        ctypes.windll.kernel32.AllocConsole()
+    p = sp.Popen(["start", "cmd", "/k", cmd], shell=True)
+    print(f"Started process with PID: {p.pid} and command: {p.args}")
+    lst.append(p)
 
-        # Start the process in the new console window
-        p = sp.Popen(cmd, shell=True)
-
-        ctypes.windll.kernel32.SetConsoleTitleW(f"{p.pid} - {cmd}")
-        print(f"Started process with PID: {p.pid} and command: {cmd}")
-        ctypes.windll.kernel32.FreeConsole()
-        
-        lst.append(p)
 
 def main(dev_mode=False):
     root = os.path.dirname(os.path.abspath(__file__))
@@ -70,17 +59,13 @@ def main(dev_mode=False):
         nginx_cmd = f"nginx -c {nginx_conf_path}"
         start(processes, nginx_cmd)
 
-    print(f"{' ':>10}Press Enter to stop the programs.{' ':<10}")
+    print(f"{' ':>10}Press Enter to stop the nginx server.{' ':<10}")
     input()
 
     nginx_stop_cmd = "nginx -s stop"
     os.system(nginx_stop_cmd)
 
-    for process in processes:
-        process.kill()
-
-
-
+    print("Close the associated terminal to close each respective process.")
 
 
 if __name__ == "__main__":
