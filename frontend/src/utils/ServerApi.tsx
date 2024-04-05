@@ -94,7 +94,7 @@ export class SocketManager {
 
     private constructor() {
         try {
-            this.socket = io("https://localhost:5000");
+            this.socket = io("https://localhost");
             console.log("Attempting to connect to server via socket.io");
 
             this.socket.on('connect', () => {

@@ -220,3 +220,5 @@ sketch
 # End of https://www.toptal.com/developers/gitignore/api/react,python,visualstudiocode,database
 
 .key
+nginx*.zip
+nginx*/
