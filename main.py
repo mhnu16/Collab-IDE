@@ -4,7 +4,8 @@ import subprocess as sp
 
 def check_dependency(cmd):
     try:
-        sp.check_output(cmd, shell=True)
+        output = sp.check_output(cmd, shell=True)
+        print(f"Output: {output.decode()}")
     except sp.CalledProcessError:
         print(f"Error: {cmd} not found. Please install it and try again.")
         exit(1)
@@ -21,12 +22,14 @@ def main(dev_mode=False):
     # Check if the main dependencies are installed
     check_dependency("npm --version")
     check_dependency("python --version")
+
+    os.chdir(os.path.join(root, "nginx-1.25.4"))
     check_dependency("nginx -v")
 
     processes = []
 
     if dev_mode:
-        print("Starting in development mode")
+        print("Starting in development mode...")
 
         # Starts up the web server, via Vite
         os.chdir(os.path.join(root, "frontend"))
@@ -59,13 +62,14 @@ def main(dev_mode=False):
         nginx_cmd = f"nginx -c {nginx_conf_path}"
         start(processes, nginx_cmd)
 
+    print()
     print(f"{' ':>10}Press Enter to stop the nginx server.{' ':<10}")
     input()
 
     nginx_stop_cmd = "nginx -s stop"
     os.system(nginx_stop_cmd)
 
-    print("Close the associated terminal to close each respective process.")
+    print(f"{' ':>10}Close the associated terminal to close each respective process.{' ':<10}")
 
 
 if __name__ == "__main__":
