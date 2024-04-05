@@ -10,6 +10,7 @@ let server_config = {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  root: "frontend",
   server: server_config,
   preview: server_config,
 });
