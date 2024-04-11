@@ -11,7 +11,7 @@ def check_dependency(cmd):
         exit(1)
 
 def start(lst, cmd):
-    p = sp.Popen(["start", "cmd", "/k", cmd], shell=True)
+    p = sp.Popen(["start", "powershell", "-NoExit", cmd], shell=True)
     print(f"Started process with PID: {p.pid} and command: {p.args}")
     lst.append(p)
 
@@ -42,7 +42,7 @@ def main(dev_mode=False):
 
         os.chdir(os.path.join(root, "nginx-1.25.4"))
         nginx_conf_path = os.path.join(root, "nginx.conf")
-        nginx_cmd = f"nginx -c {nginx_conf_path}"
+        nginx_cmd = f"./nginx -c {nginx_conf_path}"
         start(processes, nginx_cmd)
 
     else:
@@ -59,7 +59,7 @@ def main(dev_mode=False):
 
         os.chdir(os.path.join(root, "nginx-1.25.4"))
         nginx_conf_path = os.path.join(root, "nginx.conf")
-        nginx_cmd = f"nginx -c {nginx_conf_path}"
+        nginx_cmd = f"./nginx -c {nginx_conf_path}"
         start(processes, nginx_cmd)
 
     print()
