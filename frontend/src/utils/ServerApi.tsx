@@ -122,6 +122,8 @@ export class SocketManager {
             }
             msg = JSON.stringify(msg);
 
+            console.log(`Sending event: ${eventName}, with message: ${msg}`);
+
             this.socket.emit(eventName, msg);
             if (callback) {
                 this.onEvent(eventName, callback);
