@@ -167,6 +167,10 @@ class Project(Base):
     def create_folder(self) -> str:
         """
         Creates a folder in the project's directory.
+        Does nothing if the folder already exists.
+
+        Returns:
+            The path of the created folder.
         """
         directory = os.path.join(DATABASE.PROJECTS_PATH, str(self.project_id))
         os.makedirs(directory, exist_ok=True)
@@ -395,6 +399,67 @@ class Database:
         elif self.Session.is_active:
             return True
         return False
+
+    def get_file(self, project_id: str, filename: str) -> dict[str, str] | None:
+        """
+        Gets the content of a file from a project.
+
+        Note:
+            Does not require a database session.
+
+        Args:
+            project_id: The id of the project.
+            filename: The name of the file.
+
+        Returns:
+            A dictionary containing the filename, the content of the file, and the language of the file.
+            None if the file does not exist.
+        """
+        directory = os.path.join(DATABASE.PROJECTS_PATH, project_id, filename)
+        if os.path.exists(directory):
+            with open(directory, "r") as file:
+                data = file.read()
+
+            filename = os.path.basename(directory)
+            extension = filename.split(".")[-1]
+            language = self.__get_file_language(extension)
+
+            return {"filename": filename, "content": data, "language": language}
+
+        return None
+
+    @staticmethod
+    def __get_file_language(extension: str) -> str:
+        """
+        Gets the language identifier of a file based on its extension.
+
+
+        Args:
+            extension: The extension of the file.
+
+        Returns:
+            The language identifier of the file.
+        """
+
+        extension_to_language = {
+            "py": "python",
+            "js": "javascript",
+            "ts": "typescript",
+            "java": "java",
+            "c": "c",
+            "cpp": "cpp",
+            "cs": "csharp",
+            "go": "go",
+            "rb": "ruby",
+            "php": "php",
+            "html": "html",
+            "css": "css",
+            "json": "json",
+            "xml": "xml",
+            "md": "markdown",
+        }
+
+        return extension_to_language.get(extension, "plaintext")
 
     @staticmethod
     def generate_id() -> str:

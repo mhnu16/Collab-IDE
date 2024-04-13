@@ -59,8 +59,12 @@ export default function CodeEditor() {
     if (current_file === undefined) {
       return;
     }
-    sm.sendEvent('getFile', { project_id, file: current_file }, (response) => {
-      setFile(response.data);
+    sm.sendEvent('getFile', { project_id, filename: current_file }, (response) => {
+      if (!response.success) {
+        alert('Failed to get file');
+        return;
+      }
+      setFile(response.data.file);
     });
   }, [current_file])
 
@@ -97,22 +101,25 @@ export default function CodeEditor() {
                 </div>
               )
             ) : (
-              <Editor
-                className='editor__code-editor'
+              <div className='fill-container'>
+                <div className='editor__file-header'>
+                  <h1>{file.filename}</h1>
+                </div>
+                <Editor
+                  path={file.filename}
+                  defaultLanguage={file.language}
+                  defaultValue={file.content}
+                  loading={<LoadingPage></LoadingPage>}
 
-                path={file.name}
-                defaultLanguage={file.language}
-                defaultValue={file.value}
-                loading={<LoadingPage></LoadingPage>}
-
-                onMount={handleEditorDidMount}
-                theme='vs-dark'
-                options={{
-                  minimap: {
-                    enabled: false
-                  }
-                }}
-              />
+                  onMount={handleEditorDidMount}
+                  theme='vs-dark'
+                  options={{
+                    minimap: {
+                      enabled: false
+                    }
+                  }}
+                />
+              </div>
             )}
           </div>
         </ProjectContext.Provider>

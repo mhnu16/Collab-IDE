@@ -81,39 +81,24 @@ export function sendRequest<T extends ApiResponse>(url: string, method: string, 
 // ----------------------------
 
 export interface File {
-    name: string;
-    value: string;
+    filename: string;
+    content: string;
     language: string;
 }
 
 
 export class SocketManager {
     private socket: Socket;
-    private static instance: SocketManager;
-    private static eventHandlers: Map<string, ((response: ApiResponse) => any)> = new Map();
+    private static instance?: SocketManager;
+    private eventQueue: Array<{ eventName: string, msg: any, callback?: (response: ApiResponse) => void }> = [];
 
     private constructor() {
-        try {
-            this.socket = io("https://localhost");
-            console.log("Attempting to connect to server via socket.io");
-
-            this.socket.on('connect', () => {
-                console.log("Connected to server via socket.io");
-            });
-
-            this.socket.on('message', (msg) => {
-                const event = JSON.parse(msg);
-                const handler = SocketManager.eventHandlers.get(event.eventName);
-                if (handler) {
-                    handler(event.data);
-                } else {
-                    console.error(`No handler for event: ${event.eventName}`);
-                }
-            });
-        } catch (error) {
-            console.error(`Failed to create socket, the following error occurred: ${error}`);
-            throw error;
-        }
+        this.socket = io("https://localhost");
+        console.log("Attempting to connect to socket.io server")
+        this.socket.on("connect", () => {
+            console.log("Connected to socket.io server");
+            this.sendQueuedEvents();
+        });
     }
 
     public static getInstance(): SocketManager {
@@ -123,10 +108,16 @@ export class SocketManager {
         return SocketManager.instance;
     }
 
+    public disconnect() {
+        this.socket.disconnect();
+        delete SocketManager.instance;
+    }
+
     public sendEvent(eventName: string, msg: any, callback?: (response: ApiResponse) => void) {
         try {
             if (!this.socket.connected) {
-                console.error("Socket is not open!");
+                console.error("Socket is not open! putting event in queue.");
+                this.eventQueue.push({ eventName, msg, callback });
                 return;
             }
             msg = JSON.stringify(msg);
@@ -135,6 +126,7 @@ export class SocketManager {
             if (callback) {
                 this.onEvent(eventName, callback);
             }
+            console.log(`Sent event: ${eventName}`);
         } catch (error) {
             console.error(`Failed to send event: ${eventName}, the following error occurred: ${error}`);
         }
@@ -142,6 +134,15 @@ export class SocketManager {
 
     public onEvent(eventName: string, callback: (response: ApiResponse) => any) {
         // Sets the callback for the event, so that when the server responds, the callback is called
-        SocketManager.eventHandlers.set(eventName, callback);
+        this.socket.once(eventName, callback);
+    }
+
+    private sendQueuedEvents() {
+        while (this.eventQueue.length > 0) {
+            const event = this.eventQueue.shift();
+            if (event) {
+                this.sendEvent(event.eventName, event.msg, event.callback);
+            }
+        }
     }
 }
