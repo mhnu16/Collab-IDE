@@ -25,7 +25,7 @@ export default function CodeEditor() {
   const [errorCode, setErrorCode] = React.useState<number>(null!);
   const [loading, setLoading] = React.useState(true);
 
-  const sm = React.useMemo(() => new SocketManager(project_id!), [project_id]);
+  const sm = React.useMemo(() => new SocketManager(), [project_id]);
 
   React.useEffect(() => {
     sendRequest<ProjectResponse>(`/api/projects/${project_id}`, 'GET')
@@ -61,6 +61,7 @@ export default function CodeEditor() {
     }
     sm.sendEvent('get_file', { project_id, filename: current_file }, (response) => {
       if (!response.success) {
+        console.error(response.data.error);
         alert('Failed to get file');
         return;
       }

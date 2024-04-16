@@ -91,13 +91,19 @@ export class SocketManager {
     private socket: Socket;
     private eventQueue: Array<{ eventName: string, msg: any, callback?: (response: ApiResponse) => void }> = [];
 
-    public constructor(project_id: string) {
-        this.socket = io(`https://localhost`);
+    public constructor() {
+        this.socket = io(`https://localhost`, {
+        });
         console.log("Attempting to connect to socket.io server")
         this.socket.on("connect", () => {
             console.log("Connected to socket.io server");
-            // this.sendEvent("join_project", { project_id });
             this.sendQueuedEvents();
+        });
+        this.socket.on("disconnect", () => {
+            console.log("Disconnected from socket.io server");
+        });
+        this.socket.on("connect_error", (error) => {
+            console.error("Failed to connect to socket.io server, the following error occurred: ", error);
         });
     }
 
