@@ -25,7 +25,7 @@ export default function CodeEditor() {
   const [errorCode, setErrorCode] = React.useState<number>(null!);
   const [loading, setLoading] = React.useState(true);
 
-  const sm = SocketManager.getInstance();
+  const sm = React.useMemo(() => new SocketManager(project_id!), [project_id]);
 
   React.useEffect(() => {
     sendRequest<ProjectResponse>(`/api/projects/${project_id}`, 'GET')
@@ -59,7 +59,7 @@ export default function CodeEditor() {
     if (current_file === undefined) {
       return;
     }
-    sm.sendEvent('getFile', { project_id, filename: current_file }, (response) => {
+    sm.sendEvent('get_file', { project_id, filename: current_file }, (response) => {
       if (!response.success) {
         alert('Failed to get file');
         return;
@@ -103,7 +103,10 @@ export default function CodeEditor() {
             ) : (
               <div className='fill-container'>
                 <div className='editor__file-header'>
-                  <h1>{file.filename}</h1>
+                  <div className='row-container'>
+                    <h2>{file.filename}</h2>
+                    <button onClick={() => switchFile('')}>X</button>
+                  </div>
                 </div>
                 <Editor
                   path={file.filename}

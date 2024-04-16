@@ -89,28 +89,20 @@ export interface File {
 
 export class SocketManager {
     private socket: Socket;
-    private static instance?: SocketManager;
     private eventQueue: Array<{ eventName: string, msg: any, callback?: (response: ApiResponse) => void }> = [];
 
-    private constructor() {
-        this.socket = io("https://localhost");
+    public constructor(project_id: string) {
+        this.socket = io(`https://localhost`);
         console.log("Attempting to connect to socket.io server")
         this.socket.on("connect", () => {
             console.log("Connected to socket.io server");
+            // this.sendEvent("join_project", { project_id });
             this.sendQueuedEvents();
         });
     }
 
-    public static getInstance(): SocketManager {
-        if (!SocketManager.instance) {
-            SocketManager.instance = new SocketManager();
-        }
-        return SocketManager.instance;
-    }
-
     public disconnect() {
         this.socket.disconnect();
-        delete SocketManager.instance;
     }
 
     public sendEvent(eventName: string, msg: any, callback?: (response: ApiResponse) => void) {

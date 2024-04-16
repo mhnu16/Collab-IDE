@@ -7,10 +7,10 @@ from api import ApiServer, SocketServer
 
 class Server:
     def __init__(self) -> None:
-        self.database = Database()
+        self.database = Database.get_instance()
         self.app = flask.Flask(__name__)
-        ApiServer(self.app, self.database)  # Adds the API routes to the Flask app
-        self.socket_server = SocketServer(self.app, self.database)
+        ApiServer(self.app)  # Adds the API routes to the Flask app
+        self.socket_server = SocketServer(self.app)
 
     def run(self, debug=False):
         self.socket_server.start(debug=debug)

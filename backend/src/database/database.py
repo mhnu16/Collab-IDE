@@ -186,11 +186,24 @@ class Database:
     It's used for interacting with the database.
     When attempting to use this class, it's required to use the `with` statement, unless specified otherwise.
     """
+    instance = None
 
     def __init__(self) -> None:
         self.engine = create_engine("sqlite:///" + DATABASE.DB_PATH, echo=False)
         Base.metadata.create_all(self.engine)
         self.Session = scoped_session(sessionmaker(bind=self.engine))
+
+    @staticmethod
+    def get_instance() -> "Database":
+        """
+        Gets the instance of the database.
+
+        Returns:
+            The instance of the database.
+        """
+        if not Database.instance:
+            Database.instance = Database()
+        return Database.instance
 
     @contextmanager
     def session_scope(self):

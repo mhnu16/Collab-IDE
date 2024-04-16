@@ -22,10 +22,13 @@ export default function EditorSidePanel({ files, setFileStructure }: { files: st
         <div className='editor__side-panel'>
             <div className='editor__side-panel__header'>
                 <button onClick={() => window.location.href = '/'}>To Home</button>
-                <button onClick={() => createNewFile()}>New File</button>
+                <button onClick={() => console.log('implement me!')}>Project Details</button>
             </div>
             <div className='editor__files-panel'>
-                <h2 className='editor__side-panel__files-header'>Files</h2>
+                <div className='editor__side-panel__files-header'>
+                    <h2>Files</h2>
+                    <button onClick={() => createNewFile()}>New File</button>
+                </div>
                 {files.map((file) => <EditorFile key={file} label={file} />)}
             </div>
         </div >

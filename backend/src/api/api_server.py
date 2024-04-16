@@ -9,8 +9,8 @@ from random import random
 
 
 class ApiServer:
-    def __init__(self, app: flask.Flask, database: Database):
-        self.database = database
+    def __init__(self, app: flask.Flask):
+        self.database = Database.get_instance()
         self.app = app
 
         @self.app.route("/api/rand")

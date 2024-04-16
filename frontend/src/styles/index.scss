@@ -85,7 +85,7 @@ label {
   align-items: center;
 }
 
-.container-row {
+.row-container {
   @extend .container;
   flex-direction: row;
 }
