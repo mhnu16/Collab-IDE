@@ -17,9 +17,15 @@ from sqlalchemy import (
     update,
     delete,
 )
-from sqlalchemy.orm import DeclarativeBase, sessionmaker, relationship, scoped_session
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    sessionmaker,
+    relationship,
+    scoped_session,
+    Mapped,
+)
 
-from typing import Type, TypeVar, Any
+from typing import List, Type, TypeVar, Any
 
 from contextlib import contextmanager
 
@@ -78,7 +84,7 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
 
-    projects = relationship(
+    projects: Mapped[List["Project"]] = relationship(
         "Project",
         secondary="allowed_users",
         back_populates="allowed_users",
@@ -114,7 +120,7 @@ class Project(Base):
     created_at = Column(DateTime, default=datetime.datetime.now(), nullable=False)
     # The directory of the project in the filesystem is '/projects/{project_id}'
 
-    allowed_users = relationship(
+    allowed_users: Mapped[List["User"]] = relationship(
         "User",
         secondary="allowed_users",
         back_populates="projects",
@@ -186,6 +192,7 @@ class Database:
     It's used for interacting with the database.
     When attempting to use this class, it's required to use the `with` statement, unless specified otherwise.
     """
+
     instance = None
 
     def __init__(self) -> None:
