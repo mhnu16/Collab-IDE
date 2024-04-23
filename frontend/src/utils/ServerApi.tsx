@@ -120,21 +120,25 @@ export class SocketManager {
             }
             msg = JSON.stringify(msg);
 
-            console.log(`Sending event: ${eventName}, with message: ${msg}`);
+            // console.log(`Sending event: ${eventName}, with message: ${msg}`);
 
             this.socket.emit(eventName, msg);
             if (callback) {
-                this.onEvent(eventName, callback);
+                this.onceEvent(eventName, callback);
             }
-            console.log(`Sent event: ${eventName}`);
         } catch (error) {
             console.error(`Failed to send event: ${eventName}, the following error occurred: ${error}`);
         }
     };
 
+    public onceEvent(eventName: string, callback: (response: ApiResponse) => any) {
+        // Sets a one-time callback for the event, so that when the server responds, the callback is called
+        this.socket.once(eventName, callback);
+    }
+
     public onEvent(eventName: string, callback: (response: ApiResponse) => any) {
         // Sets the callback for the event, so that when the server responds, the callback is called
-        this.socket.once(eventName, callback);
+        this.socket.on(eventName, callback);
     }
 
     private sendQueuedEvents() {
@@ -144,5 +148,9 @@ export class SocketManager {
                 this.sendEvent(event.eventName, event.msg, event.callback);
             }
         }
+    }
+
+    public getSID() {
+        return this.socket.id;
     }
 }

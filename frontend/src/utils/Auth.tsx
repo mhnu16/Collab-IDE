@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { UserResponse, sendRequest } from './ServerApi';
 import LoadingPage from '../Components/LoadingPage';
 
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     console.error("User is not logged in!");
                 }
                 else {
-                    console.error("Check user failed: " + err);
+                    console.error(`Error checking user: ${err.status}, ${err.statusText}`);
                 }
                 throw err;
             });
@@ -104,13 +104,13 @@ interface AuthContextType {
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     let [loading, setLoading] = React.useState(true);
     const auth = useAuth();
+    const navigate = useNavigate();
 
     React.useEffect(() => {
         auth.checkUser()
             .then(() => setLoading(false))
-            .catch((err) => {
-                console.error("Error checking user: " + err);
-                setLoading(false);
+            .catch(() => {
+                navigate("/login");
             });
     }, []);
 
@@ -120,9 +120,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (loading) {
         return <LoadingPage />;
     } else {
-        if (!auth.user) {
-            return <Navigate to="/login" />;
-        }
         return <>{children}</>;
     }
 

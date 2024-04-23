@@ -50,7 +50,7 @@ def main(dev_mode=False):
 
         # Starts up the web server, via Vite
         os.chdir(os.path.join(root, "frontend"))
-        vit_cmd = '"npm run build && npm run preview"'
+        vit_cmd = "npm run build; if ($?) { npm run preview }"
         start(processes, vit_cmd)
 
         os.chdir(os.path.join(root, "backend", "src"))
@@ -73,4 +73,4 @@ def main(dev_mode=False):
 
 
 if __name__ == "__main__":
-    main(dev_mode=True)
+    main(dev_mode=False)

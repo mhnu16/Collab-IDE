@@ -152,7 +152,6 @@ class Project(Base):
 
         if not os.path.exists(directory):
             return {}
-
         structure = {}
 
         for item in os.listdir(directory):
@@ -433,8 +432,20 @@ class Database:
 
         Returns:
             A dictionary containing the filename, the content of the file, and the language of the file.
+
+            meaning::
+
+            {
+                "filename": str,
+                "content": str,
+                "language": str
+            }
+
             None if the file does not exist.
         """
+        if filename.startswith("/"):
+            filename = filename[1:]
+
         directory = os.path.join(DATABASE.PROJECTS_PATH, project_id, filename)
         if os.path.exists(directory):
             with open(directory, "r") as file:
@@ -448,17 +459,149 @@ class Database:
 
         return None
 
+    def get_file_hash(self, project_id: str, filename: str) -> str | None:
+        """
+        Gets the hash of a file from a project.
+
+        Note:
+            Does not require a database session.
+
+        Args:
+            project_id: The id of the project.
+            filename: The name of the file.
+
+        Returns:
+            The hash of the file.
+            None if the file does not exist.
+        """
+        file = self.get_file(project_id, filename)
+        if file:
+            return sha256(file["content"].encode()).hexdigest()
+        return None
+
+    def create_file(self, project_id: str, filename: str) -> dict[str, str] | None:
+        """
+        Creates a file in a project.
+
+        Note:
+            Does not require a database session.
+
+        Args:
+            project_id: The id of the project.
+            filename: The name of the file.
+
+        Returns:
+            A dictionary containing the filename, the content of the file, and the language of the file.
+            None if the file already exists.
+        """
+        directory = os.path.join(DATABASE.PROJECTS_PATH, project_id, filename)
+        if not os.path.exists(directory):
+            with open(directory, "w") as file:
+                file.write("")
+
+            filename = os.path.basename(directory)
+            extension = filename.split(".")[-1]
+            language = self.__get_file_language(extension)
+
+            return {"filename": filename, "content": "", "language": language}
+
+        return None
+
+    def apply_changes(
+        self, project_id: str, filename: str, changes: list[dict[str, Any]]
+    ) -> bool:
+        if filename.startswith("/"):
+            filename = filename[1:]
+
+        directory = os.path.join(DATABASE.PROJECTS_PATH, project_id, filename)
+        if not os.path.isfile(directory):
+            return False
+
+        if not changes:
+            return True
+
+        changes.sort(
+            key=lambda change: (
+                -change["range"]["startLineNumber"],
+                -change["range"]["startColumn"],
+            )
+        )
+
+        with open(directory, "r") as file:
+            content = file.read().split("\n")
+
+        for change in changes:
+            range = change["range"]
+            start_line_number = range["startLineNumber"] - 1
+            start_column = range["startColumn"] - 1
+            end_line_number = range["endLineNumber"] - 1
+            end_column = range["endColumn"] - 1
+
+            # Append empty lines if end line number is greater than length of content
+            while len(content) <= end_line_number:
+                content.append("")
+
+            if (
+                start_line_number < 0
+                or start_line_number >= len(content)
+                or end_line_number < 0
+                or end_line_number >= len(content)
+                or start_column < 0
+                or start_column > len(content[start_line_number])
+                or end_column < 0
+                or end_column > len(content[end_line_number])
+                or (start_line_number == end_line_number and start_column > end_column)
+                or start_line_number > end_line_number
+            ):
+                return False
+
+            before_change = content[:start_line_number]
+            during_change = content[start_line_number : end_line_number + 1]
+            after_change = content[end_line_number + 1 :]
+
+            first_line = during_change[0][:start_column]
+            last_line = during_change[-1][end_column:]
+
+            text = change["text"]
+            text = self.__normalize_line_endings(text)
+            new_lines = (first_line + text + last_line).split("\n")
+
+            content = before_change + new_lines + after_change
+
+        with open(directory, "w") as file:
+            file.write("\n".join(content))
+
+        return True
+
+    @staticmethod
+    def __normalize_line_endings(text: str) -> str:
+        """
+        Normalizes the line endings of a text.
+
+        Note:
+            Does not require a database session.
+
+        Args:
+            text: The text to normalize.
+
+        Returns:
+            The normalized text.
+        """
+        return text.replace("\r\n", "\n")
+
     @staticmethod
     def __get_file_language(extension: str) -> str:
         """
-        Gets the language identifier of a file based on its extension.
+        Gets the language of a file based on its extension.
 
+        Note:
+            Does not require a database session.
 
         Args:
             extension: The extension of the file.
 
         Returns:
-            The language identifier of the file.
+            The language of the file.
         """
 
         extension_to_language = {

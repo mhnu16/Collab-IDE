@@ -161,7 +161,7 @@ class ApiServer:
                 # TODO: I probably need to establish a websocket connection here, to allow for real-time communication
 
                 response = self.json_response(True, project.to_dict())
-                response.set_cookie("project_id", project_id, httponly=True)
+                response.set_cookie("project_id", project_id, httponly=True, samesite="Strict")
                 return response
 
         @self.app.route("/api/user", methods=["GET"])

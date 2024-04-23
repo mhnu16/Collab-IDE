@@ -1,18 +1,30 @@
 import React from 'react';
 import { EditorContext, NetworkContext, ProjectContext } from '../CodeEditor';
+import { useNavigate } from 'react-router-dom';
+
 
 export default function EditorSidePanel({ files, setFileStructure }: { files: string[], setFileStructure: React.Dispatch<React.SetStateAction<string[]>> }) {
     let sm = React.useContext(NetworkContext)
     let project = React.useContext(ProjectContext);
+    let navigate = useNavigate();
+
+    sm.onEvent('structure_update', (response) => {
+        if (response.success) {
+            setFileStructure(response.data.structure);
+        } else {
+            console.error(response.data.error);
+        }
+    });
 
     function createNewFile() {
         let new_file = prompt("Enter the name of the new file");
         if (new_file) {
-            sm.sendEvent('createFile', { project_id: project.project_id, file_name: new_file }, (response) => {
+            sm.sendEvent('create_file', { filename: new_file }, (response) => {
                 if (response.success) {
-                    setFileStructure([...files, new_file as string]);
-                } else {
-                    alert('Failed to create file');
+                    navigate(`/projects/${project.project_id}/${new_file}`);
+                }
+                else {
+                    console.error(response.data.error);
                 }
             });
         }

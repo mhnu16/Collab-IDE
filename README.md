@@ -25,7 +25,25 @@ To get started with the project, follow these steps:
 
 2. Run the [install_dependencies.py](install_dependencies.py) script to automatically install the required dependencies for the project. This script will install the required Python packages and Node.js packages and download the required nginx version.
 
-3. Run the [main.py](main.py) script to start the development server. This script will start nginx, the flask server and the vite development server.
+3. [(*)]() Run the [main.py](main.py) script to start the development server. This script will start nginx, the flask server and the vite development server.
 
 4. Navigate to https://localhost in your browser. You should see the Collab-IDE homepage or the Login page.
 
+#### (*) Note: Alternatively, you can run the following commands manually, each in a separate terminal window:
+Setup the backend:
+```bash
+pip install -r requirements.txt
+cd backend/src
+python main.py
+```
+Setup the frontend:
+```bash
+npm install
+cd frontend
+npm run dev
+```
+Run the nginx server:
+```bash
+cd nginx-1.25.4
+./nginx -c ../nginx.conf
+```

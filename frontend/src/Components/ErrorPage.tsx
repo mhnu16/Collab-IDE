@@ -1,4 +1,3 @@
-import React from 'react'
 import '../styles/ErrorPage.scss'
 
 export default function ErrorPage({ code }: { code: number }) {
