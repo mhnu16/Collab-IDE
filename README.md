@@ -33,8 +33,13 @@ To get started with the project, follow these steps:
 Setup the backend:
 ```bash
 pip install -r requirements.txt
-cd backend/src
+cd backend/src/python
 python main.py
+```
+```bash
+npm install
+cd backend/src/typescript
+tsc && node dist/server.cjs
 ```
 Setup the frontend:
 ```bash

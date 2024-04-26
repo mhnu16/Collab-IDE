@@ -141,27 +141,7 @@ class Project(Base):
             "language": self.language,
             "created_at": self.created_at,
             "allowed_users": self.get_allowed_users(),
-            "structure": self.get_structure(),
         }
-
-    def get_structure(self, path: str | None = None) -> dict[str, Any]:
-        """
-        Returns the structure of the project's filesystem as a dictionary.
-        """
-        directory = path or self.create_folder()
-
-        if not os.path.exists(directory):
-            return {}
-        structure = {}
-
-        for item in os.listdir(directory):
-            item_path = os.path.join(directory, item)
-            if os.path.isdir(item_path):
-                structure[item] = self.get_structure(item_path)
-            else:
-                structure[item] = None
-
-        return structure
 
     def get_allowed_users(self) -> list[dict[str, Any]]:
         """
