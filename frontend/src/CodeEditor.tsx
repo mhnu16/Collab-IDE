@@ -35,21 +35,6 @@ export default function CodeEditor() {
     return SocketManager.getInstance();
   }, []);
 
-  // const monacoBinding = React.useMemo(() => {
-  //   if (!doc || !provider || !editor.current) {
-  //     return null;
-  //   }
-
-  //   let model = editor.current.getModel();
-  //   if (model == null) {
-  //     return null;
-  //   }
-
-  //   console.log('Creating MonacoBinding for:', current_file);
-
-  //   return new MonacoBinding(doc.getText('monaco'), model, new Set([editor.current]), provider.awareness);
-  // }, [doc, provider, editor.current]);
-
   // Sets up the socket event listeners
   React.useEffect(() => {
     sm.on('file_structure_update', (data) => {
@@ -67,7 +52,7 @@ export default function CodeEditor() {
       .then((res) => {
         if (res.success) {
           setProject(res.data);
-          sm.emit('get_file_structure'); // This gets handled in the EditorSidePanel component
+          sm.emit('get_file_structure');
         }
       }).catch((err) => {
         if (err.status === 403) {
@@ -86,6 +71,7 @@ export default function CodeEditor() {
       });
   }, []);
 
+  // Checks if the current file is in the file structure
   React.useEffect(() => {
     if (current_file == undefined || current_file == '') {
       return;
@@ -97,62 +83,6 @@ export default function CodeEditor() {
     }
     setErrorCode(null!);
   }, [current_file])
-
-  // React.useEffect(() => {
-  //   if (current_file == undefined || current_file == '') {
-  //     return;
-  //   }
-
-  //   if (errorCode != null) {
-  //     return;
-  //   }
-
-  //   if (doc) {
-  //     doc.destroy();
-  //   }
-  //   if (provider) {
-  //     provider.destroy();
-  //   }
-
-  //   console.log('Creating new doc for:', current_file);
-  //   const _doc = new Y.Doc();
-  //   setDoc(_doc);
-
-  //   console.log('Creating provider for:', current_file);
-  //   const _provider = new SocketIOProvider('https://localhost', project_id + '/' + current_file, _doc, {
-  //   });
-  //   setProvider(_provider);
-
-  // }, [current_file]);
-
-  // React.useEffect(() => {
-  //   if (!!doc && !provider) {
-  //     if (current_file == undefined || current_file == '') {
-  //       return;
-  //     }
-  //     console.log('Creating provider for:', current_file);
-  //     const _provider = new SocketIOProvider('https://localhost', project_id + '/' + current_file, doc, {
-  //     });
-  //     setProvider(_provider);
-  //   }
-  // }, [doc, provider, current_file]);
-
-  // React.useEffect(() => {
-  //   if (current_file == undefined || current_file == '') {
-  //     return;
-  //   }
-
-  //   if (errorCode != null) {
-  //     return;
-  //   }
-
-  //   if (editor.current == null || editor.current.getModel() == null) {
-  //     return;
-  //   }
-
-  //   setupYjs();
-
-  // }, []);
 
   function handleEditorDidMount(new_editor: monaco.editor.IStandaloneCodeEditor, _monaco: typeof monaco) {
     editor.current = new_editor;
