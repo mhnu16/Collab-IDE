@@ -6,18 +6,18 @@ import { Editor } from '@monaco-editor/react';
 import * as Y from 'yjs';
 import { MonacoBinding } from 'y-monaco';
 
-import { Project, ProjectResponse, sendRequest, SocketManager } from './utils/ServerApi';
+import { Project, ProjectResponse, sendRequest, SocketManager } from '../utils/ServerApi';
 
-import EditorSidePanel from './Components/EditorSidePanel';
-import LoadingPage from './Components/LoadingPage';
-import ErrorPage from './Components/ErrorPage';
+import EditorSidePanel from './components/EditorSidePanel';
+import LoadingPage from '../GenericPages/LoadingPage';
+import ErrorPage from '../GenericPages/ErrorPage';
 import { SocketIOProvider } from 'y-socket.io';
 
 export const EditorContext = React.createContext<{ editor: monaco.editor.IStandaloneCodeEditor | null, switchFile: (file: string) => void }>({ editor: null, switchFile: () => { } });
 export const NetworkContext = React.createContext<SocketManager>(null!);
 export const ProjectContext = React.createContext<Project>(null!);
 
-export default function CodeEditor() {
+export default function EditorPage() {
   const editor = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [fileStructure, setFileStructure] = React.useState<string[]>([]);
   const [project, setProject] = React.useState<Project>(null!);

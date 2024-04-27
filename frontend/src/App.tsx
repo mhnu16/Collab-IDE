@@ -1,37 +1,45 @@
-import './styles/App.scss'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider, ProtectedRoute } from './utils/Auth'
-import Home from './Home'
-import Login from './Login'
-import Register from './Register'
-import CodeEditor from './CodeEditor'
+import HomePage from './HomePage'
+import LoginPage from './LoginPage'
+import RegisterPage from './RegisterPage'
+import EditorPage from './Editor'
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+const defaultTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  }
+});
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          } />
-          <Route path="/projects/:project_id" element={
-            <ProtectedRoute>
-              <CodeEditor />
-            </ProtectedRoute>
-          }>
-            <Route path=":current_file" element={
+    <ThemeProvider theme={defaultTheme}>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/" element={
               <ProtectedRoute>
-                <CodeEditor />
+                <HomePage />
               </ProtectedRoute>
             } />
-          </Route>
-        </Routes>
-      </Router>
-    </AuthProvider>
+            <Route path="/projects/:project_id" element={
+              <ProtectedRoute>
+                <EditorPage />
+              </ProtectedRoute>
+            }>
+              <Route path=":current_file" element={
+                <ProtectedRoute>
+                  <EditorPage />
+                </ProtectedRoute>
+              } />
+            </Route>
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

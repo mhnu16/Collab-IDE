@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserResponse, sendRequest } from './ServerApi';
-import LoadingPage from '../Components/LoadingPage';
+import LoadingPage from '../GenericPages/LoadingPage';
 
 interface User {
     id: number;
@@ -41,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .then((response) => {
                 if (response.success) {
                     setUser(null!);
+                    window.location.href = "/login";
                 }
             })
             .catch((error) => {

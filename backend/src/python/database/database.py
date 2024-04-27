@@ -118,7 +118,6 @@ class Project(Base):
     description = Column(String, nullable=False)
     language = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.now(), nullable=False)
-    # The directory of the project in the filesystem is '/projects/{project_id}'
 
     allowed_users: Mapped[List["User"]] = relationship(
         "User",
@@ -127,7 +126,7 @@ class Project(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Project(project_id={self.project_id}, name={self.name}, description={self.description}, language={self.language}, created_at={self.created_at}, directory={self.directory})>"
+        return f"<Project(project_id={self.project_id}, name={self.name}, description={self.description}, language={self.language}, created_at={self.created_at})>"
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -148,18 +147,6 @@ class Project(Base):
         Returns the allowed users of the project as a list of dictionaries.
         """
         return [user.to_dict() for user in self.allowed_users]
-
-    def create_folder(self) -> str:
-        """
-        Creates a folder in the project's directory.
-        Does nothing if the folder already exists.
-
-        Returns:
-            The path of the created folder.
-        """
-        directory = os.path.join(DATABASE.PROJECTS_PATH, str(self.project_id))
-        os.makedirs(directory, exist_ok=True)
-        return directory
 
 
 tables = TypeVar("tables", User, Session, Project)
@@ -284,7 +271,6 @@ class Database:
         project = self.select_from(Project, Project.project_id == project_id)
         if project:
             self.add_allowed_user(project.id, user_id)
-            project.create_folder()
             return project
 
         return None
