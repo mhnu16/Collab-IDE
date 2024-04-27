@@ -1,5 +1,7 @@
 import jquery from "jquery";
 import { io, Socket } from 'socket.io-client';
+import { SocketIOProvider } from "y-socket.io";
+import * as Y from "yjs";
 
 interface SuccessResponse<T> {
     success: true;
@@ -88,69 +90,70 @@ export interface File {
 
 
 export class SocketManager {
+    private static instance: SocketManager;
     private socket: Socket;
-    private eventQueue: Array<{ eventName: string, msg: any, callback?: (response: ApiResponse) => void }> = [];
+    // private provider?: SocketIOProvider;
+    // private ydoc?: Y.Doc;
+    // private ytext?: Y.Text;
 
-    public constructor() {
-        this.socket = io(`https://localhost`, {
+    private constructor() {
+        this.socket = io('https://localhost');
+
+        // // If the room_name is only the project_id, then don't make a yjs connection
+        // if (room_name.includes('/')) {
+        //     console.log('Creating Yjs connection');
+
+        //     this.ydoc = new Y.Doc();
+        //     this.provider = new SocketIOProvider('https://localhost', room_name, this.ydoc, {});
+        //     this.provider.on('status', (status: string) => {
+        //         console.log('Status: ', status);
+        //     });
+        //     this.provider.on('sync', (isSynced: boolean) => {
+        //         console.log('Synced: ', isSynced);
+        //     });
+        //     this.provider.on('connection-close', (event: Socket.DisconnectReason, provider: SocketIOProvider) => {
+        //         console.log('Connection closed: ', event);
+        //     });
+        //     this.provider.on('connection-error', (event: Socket.DisconnectReason, provider: SocketIOProvider) => {
+        //         console.log('Connection error: ', event);
+        //     });
+
+        //     this.ytext = this.ydoc.getText('monaco');
+        // }
+
+        this.socket.on('connect', () => {
+            console.log(`Connected to server with id: ${this.socket.id}`);
         });
-        console.log("Attempting to connect to socket.io server")
-        this.socket.on("connect", () => {
-            console.log("Connected to socket.io server");
-            this.sendQueuedEvents();
-        });
-        this.socket.on("disconnect", () => {
-            console.log("Disconnected from socket.io server");
-        });
-        this.socket.on("connect_error", (error) => {
-            console.error("Failed to connect to socket.io server, the following error occurred: ", error);
+
+        this.socket.on('disconnect', () => {
+            console.log('Disconnected from server');
         });
     }
 
-    public disconnect() {
-        this.socket.disconnect();
-    }
-
-    public sendEvent(eventName: string, msg: any, callback?: (response: ApiResponse) => void) {
-        try {
-            if (!this.socket.connected) {
-                console.error("Socket is not open! putting event in queue.");
-                this.eventQueue.push({ eventName, msg, callback });
-                return;
-            }
-            msg = JSON.stringify(msg);
-
-            // console.log(`Sending event: ${eventName}, with message: ${msg}`);
-
-            this.socket.emit(eventName, msg);
-            if (callback) {
-                this.onceEvent(eventName, callback);
-            }
-        } catch (error) {
-            console.error(`Failed to send event: ${eventName}, the following error occurred: ${error}`);
+    public static getInstance(): SocketManager {
+        if (!SocketManager.instance) {
+            SocketManager.instance = new SocketManager();
         }
-    };
-
-    public onceEvent(eventName: string, callback: (response: ApiResponse) => any) {
-        // Sets a one-time callback for the event, so that when the server responds, the callback is called
-        this.socket.once(eventName, callback);
+        return SocketManager.instance;
     }
 
-    public onEvent(eventName: string, callback: (response: ApiResponse) => any) {
-        // Sets the callback for the event, so that when the server responds, the callback is called
-        this.socket.on(eventName, callback);
+    public on(event: string, callback: (data: any) => void): void {
+        this.socket.on(event, callback);
     }
 
-    private sendQueuedEvents() {
-        while (this.eventQueue.length > 0) {
-            const event = this.eventQueue.shift();
-            if (event) {
-                this.sendEvent(event.eventName, event.msg, event.callback);
-            }
-        }
+    public emit(event: string, ...data: any[]): void {
+        this.socket.emit(event, data);
     }
 
-    public getSID() {
-        return this.socket.id;
-    }
+    // public getProvider(): SocketIOProvider {
+    //     return this.provider;
+    // }
+
+    // public getYDoc(): Y.Doc {
+    //     return this.ydoc;
+    // }
+
+    // public getYText(): Y.Text {
+    //     return this.ytext;
+    // }
 }
