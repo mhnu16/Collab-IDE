@@ -3,7 +3,7 @@ import { AuthProvider, ProtectedRoute } from './utils/Auth'
 import HomePage from './HomePage'
 import LoginPage from './LoginPage'
 import RegisterPage from './RegisterPage'
-import EditorPage from './Editor'
+import EditorPage from './EditorPage'
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const defaultTheme = createTheme({

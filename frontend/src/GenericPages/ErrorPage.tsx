@@ -1,4 +1,7 @@
-import '../styles/ErrorPage.scss'
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+import CssBaseline from "@mui/material/CssBaseline";
+import Typography from "@mui/material/Typography";
 
 export default function ErrorPage({ code }: { code: number }) {
     let message = '';
@@ -16,9 +19,16 @@ export default function ErrorPage({ code }: { code: number }) {
     }
 
     return (
-        <div className='error-page'>
-            <h1>Error {code}</h1>
-            <p>{message}</p>
-        </div>
+        <Container maxWidth="sm">
+            <CssBaseline />
+            <Box my={4}>
+                <Typography variant="h2" component="h1" gutterBottom>
+                    Error {code}
+                </Typography>
+                <Typography variant="body1">
+                    {message}
+                </Typography>
+            </Box>
+        </Container>
     )
 }

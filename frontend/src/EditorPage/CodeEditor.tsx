@@ -1,17 +1,24 @@
 import React from 'react';
-import './styles/CodeEditor.scss';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import * as monaco from 'monaco-editor';
 import { Editor } from '@monaco-editor/react';
 import * as Y from 'yjs';
 import { MonacoBinding } from 'y-monaco';
+import { SocketIOProvider } from 'y-socket.io';
 
 import { Project, ProjectResponse, sendRequest, SocketManager } from '../utils/ServerApi';
 
-import EditorSidePanel from './components/EditorSidePanel';
 import LoadingPage from '../GenericPages/LoadingPage';
 import ErrorPage from '../GenericPages/ErrorPage';
-import { SocketIOProvider } from 'y-socket.io';
+import EditorSidePanel from './components/EditorSidePanel';
+
+import CssBaseline from '@mui/material/CssBaseline';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import CloseIcon from '@mui/icons-material/Close';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
 
 export const EditorContext = React.createContext<{ editor: monaco.editor.IStandaloneCodeEditor | null, switchFile: (file: string) => void }>({ editor: null, switchFile: () => { } });
 export const NetworkContext = React.createContext<SocketManager>(null!);
@@ -130,7 +137,6 @@ export default function EditorPage() {
     console.log('MonacoBinding created for:', uri_path);
   }
 
-
   function switchFile(file: string) {
     navigate(`/projects/${project_id}/${file}`);
   }
@@ -147,45 +153,70 @@ export default function EditorPage() {
     <EditorContext.Provider value={{ editor: editor.current, switchFile }}>
       <NetworkContext.Provider value={sm}>
         <ProjectContext.Provider value={project}>
-          <div className='editor'>
-            <EditorSidePanel files={fileStructure}></EditorSidePanel>
-            {current_file == null ? (
-              <div className='editor__no-file-selected'>
-                <h2>No File Selected</h2>
-                <p>Please select a file from the side panel to start editing.</p>
-              </div>
-            ) : sm == null ? (
-              (
-                <div className='fill-container'>
-                  <LoadingPage></LoadingPage>
-                </div>
-              )
-            ) : (
-              <div className='fill-container'>
-                <div className='editor__file-header'>
-                  <div className='row-container'>
-                    <h2>{current_file}</h2>
-                    <button onClick={() => switchFile('')}>X</button>
-                  </div>
-                </div>
-                <Editor
-                  path={current_file}
-                  defaultLanguage='typescript'
-                  loading={<LoadingPage></LoadingPage>}
-                  onMount={handleEditorDidMount}
-                  saveViewState={false}
-                  theme='vs-dark'
-                  options={{
-                    minimap: {
-                      enabled: false
-                    }
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          <Grid container component="main" sx={{ height: '100vh' }}>
+            <CssBaseline />
+            <Grid item xs={3}>
+              <EditorSidePanel files={fileStructure}></EditorSidePanel>
+            </Grid>
+            <Grid item xs={9}>
+              <Paper elevation={2} sx={{ height: '100%', width: '100%' }}>
+                {(() => {
+                  if (current_file == null) {
+                    return (
+                      <NoFileSelectedScreen />
+                    );
+                  }
+                  else if (sm == null) {
+                    return (
+                      <LoadingPage></LoadingPage>
+                    );
+                  }
+                  return (
+                    <Box height='100%'>
+                      <Box display='flex' flexDirection='column' justifyContent='center' alignItems='center' height='100%'>
+                        <FileHeader filename={current_file} onClick={() => switchFile('')}></FileHeader>
+                        <Editor
+                          path={current_file}
+                          defaultLanguage='typescript'
+                          loading={<LoadingPage></LoadingPage>}
+                          onMount={handleEditorDidMount}
+                          saveViewState={false}
+                          theme='vs-dark'
+                          options={{
+                            minimap: {
+                              enabled: false
+                            }
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  );
+                })()}
+              </Paper>
+            </Grid>
+          </Grid>
         </ProjectContext.Provider>
       </NetworkContext.Provider>
     </EditorContext.Provider>
+  );
+}
+
+function NoFileSelectedScreen() {
+  return (
+    <Box display='flex' flexDirection='column' justifyContent='center' alignItems='center' height='100%'>
+      <Typography variant='h2'>No File Selected</Typography>
+      <Typography variant='body1'>Please select a file from the side panel to start editing.</Typography>
+    </Box>
+  );
+}
+
+function FileHeader(props: { filename: string, onClick: () => void }) {
+  return (
+    <Box display='flex' p={2}>
+      <Typography variant='h4' mx={1}>{props.filename}</Typography>
+      <Button variant='outlined' onClick={props.onClick}>
+        <CloseIcon />
+      </Button>
+    </Box>
   );
 }

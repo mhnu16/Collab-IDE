@@ -55,6 +55,15 @@ async function getFileNames(project_id: string): Promise<string[]> {
     });
 }
 
+async function deleteFile(project_id: string, file_name: string): Promise<boolean> {
+    return persistence.clearDocument(project_id + '/' + file_name).then(() => {
+        console.log(`[deleteFile] Deleted file: ${project_id}/${file_name}`);
+        return true;
+    }).catch((err: Error) => {
+        console.error(err);
+        return false;
+    });
+}
 io.on('connection', (socket: Socket) => {
     console.log(`[connection] Connected with user: ${socket.id}`);
 
@@ -95,6 +104,24 @@ io.on('connection', (socket: Socket) => {
                 console.log(`[create_new_file] Emitting file_structure_update: ${files}`);
                 socket.emit('file_structure_update', { files: [...fileNames, file_name] });
                 console.log(`[create_new_file] Created new file: ${file_name}`);
+            }
+        });
+    });
+
+    socket.on('delete_file', (fileName: string[] /* For some reason */) => {
+        let fileNameString = fileName[0];
+        console.log(`[delete_file] Project ID: ${project_id}, File Name: ${fileNameString}`);
+        getFileNames(project_id).then((fileNames) => {
+            if (fileNames.includes(fileNameString)) {
+                console.log(`[delete_file] Deleting file: ${project_id}/${fileNameString}`);
+                deleteFile(project_id, fileNameString).then((success) => {
+                    if (success) {
+                        let files = fileNames.filter((fileName) => fileName !== fileNameString);
+                        console.log(`[delete_file] Emitting file_structure_update: ${files}`);
+                        socket.emit('file_structure_update', { files: files });
+                        console.log(`[delete_file] Deleted file: ${fileNameString}`);
+                    }
+                });
             }
         });
     });

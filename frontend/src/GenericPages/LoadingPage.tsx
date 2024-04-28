@@ -1,10 +1,24 @@
-import logo from '/logo.svg'
+import logo from '/logo.svg';
+
+import CircularProgress from '@mui/material/CircularProgress';
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import CssBaseline from '@mui/material/CssBaseline';
 
 export default function LoadingPage() {
     return (
-        <div className='container'>
-            <h1>Loading...</h1>
-            <img src={logo} className="App-logo" alt="logo" />
-        </div>
-    )
+        <Container maxWidth="sm">
+            <CssBaseline />
+            <Box
+                display="flex"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                minHeight="100%"
+            >
+                <img src={logo} alt="logo" />
+                <CircularProgress />
+            </Box>
+        </Container>
+    );
 }

@@ -1,6 +1,8 @@
 /** @jsxImportSource @emotion/react */
 import React from 'react';
 
+import logo from '/logo.svg';
+
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -14,7 +16,6 @@ import { AlertColor } from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
-import logo from '../public/logo.svg';
 import { css, keyframes } from '@emotion/react';
 
 import { useAuth } from '../utils/Auth';
