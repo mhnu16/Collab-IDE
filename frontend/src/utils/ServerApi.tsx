@@ -1,7 +1,5 @@
 import jquery from "jquery";
 import { io, Socket } from 'socket.io-client';
-import { SocketIOProvider } from "y-socket.io";
-import * as Y from "yjs";
 
 interface SuccessResponse<T> {
     success: true;
@@ -35,8 +33,7 @@ export interface Project {
     language: string;
     created_at: Date;
     last_updated_at: Date;
-    allowed_users: User[];
-    structure: FileSystemObject;
+    allowed_users: User[];    
 }
 
 export interface Projects {
@@ -99,28 +96,6 @@ export class SocketManager {
     private constructor() {
         this.socket = io('https://localhost');
 
-        // // If the room_name is only the project_id, then don't make a yjs connection
-        // if (room_name.includes('/')) {
-        //     console.log('Creating Yjs connection');
-
-        //     this.ydoc = new Y.Doc();
-        //     this.provider = new SocketIOProvider('https://localhost', room_name, this.ydoc, {});
-        //     this.provider.on('status', (status: string) => {
-        //         console.log('Status: ', status);
-        //     });
-        //     this.provider.on('sync', (isSynced: boolean) => {
-        //         console.log('Synced: ', isSynced);
-        //     });
-        //     this.provider.on('connection-close', (event: Socket.DisconnectReason, provider: SocketIOProvider) => {
-        //         console.log('Connection closed: ', event);
-        //     });
-        //     this.provider.on('connection-error', (event: Socket.DisconnectReason, provider: SocketIOProvider) => {
-        //         console.log('Connection error: ', event);
-        //     });
-
-        //     this.ytext = this.ydoc.getText('monaco');
-        // }
-
         this.socket.on('connect', () => {
             console.log(`Connected to server with id: ${this.socket.id}`);
         });
@@ -144,16 +119,4 @@ export class SocketManager {
     public emit(event: string, ...data: any[]): void {
         this.socket.emit(event, data);
     }
-
-    // public getProvider(): SocketIOProvider {
-    //     return this.provider;
-    // }
-
-    // public getYDoc(): Y.Doc {
-    //     return this.ydoc;
-    // }
-
-    // public getYText(): Y.Text {
-    //     return this.ytext;
-    // }
 }
