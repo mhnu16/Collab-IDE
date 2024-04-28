@@ -95,7 +95,10 @@ class ApiServer:
         def projects():
             user_id = flask.g.user_id
             with self.database.session_scope():
-                projects = self.database.select_from(User, User.id == user_id).projects
+                user = self.database.select_from(User, User.id == user_id)
+                if not user:
+                    return self.json_response(False, {"error": "User not found"}, 404)
+                projects = user.projects
                 projects = [p.to_dict() for p in projects]
             return self.json_response(True, {"projects": projects})
 
@@ -158,15 +161,13 @@ class ApiServer:
                 if user_id not in allowed_users:
                     return self.json_response(False, {"error": "Access denied"}, 403)
 
-                # TODO: I probably need to establish a websocket connection here, to allow for real-time communication
-
                 response = self.json_response(True, project.to_dict())
                 response.set_cookie(
                     "project_id", project_id, httponly=True, samesite="Strict"
                 )
                 return response
 
-        @self.app.route("/api/project/<project_id>/add_user", methods=["POST"])
+        @self.app.route("/api/projects/<project_id>/addUser", methods=["POST"])
         def add_user(project_id: str):
             data = flask.request.json
             if not data:
@@ -203,11 +204,50 @@ class ApiServer:
 
             return self.json_response(False, {"error": "Failed to add user"})
 
+        @self.app.route("/api/projects/<project_id>/removeUser", methods=["POST"])
+        def remove_user(project_id: str):
+            data = flask.request.json
+            if not data:
+                return self.json_response(False, {"error": "Invalid request"}, 400)
+            email = data.get("email")
+            if email:
+                with self.database.session_scope():
+                    project = self.database.select_from(
+                        Project, Project.project_id == project_id
+                    )
+                    if not project:
+                        return self.json_response(
+                            False, {"error": "Project not found"}, 404
+                        )
+
+                    # Check if user has access to the project
+                    allowed_users = [user.id for user in project.allowed_users]
+                    user_id = flask.g.user_id
+                    if user_id not in allowed_users:
+                        return self.json_response(
+                            False, {"error": "Access denied"}, 403
+                        )
+
+                    user = self.database.select_from(User, User.email == email)
+                    if not user:
+                        return self.json_response(
+                            False, {"error": "User not found"}, 404
+                        )
+
+                    # Remove user from project
+                    self.database.remove_allowed_user(project.id, user.id)
+
+                    return self.json_response(True, project.to_dict())
+
+            return self.json_response(False, {"error": "Failed to remove user"})
+
         @self.app.route("/api/user", methods=["GET"])
         def user():
             user_id = flask.g.user_id
             with self.database.session_scope():
                 user = self.database.select_from(User, User.id == user_id)
+                if not user:
+                    return self.json_response(False, {"error": "User not found"}, 404)
                 return self.json_response(True, user.to_dict())
 
         @self.app.before_request

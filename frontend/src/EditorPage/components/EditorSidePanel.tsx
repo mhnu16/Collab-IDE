@@ -1,5 +1,5 @@
 import React from 'react';
-import { EditorContext, NetworkContext } from '../CodeEditor';
+import { FuncContext, NetworkContext } from '../CodeEditor';
 
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,7 +13,7 @@ import Paper from '@mui/material/Paper';
 
 
 export default function EditorSidePanel({ files }: { files: string[] }) {
-    const { switchFile } = React.useContext(EditorContext);
+    const { switchFile, openProjectDetails } = React.useContext(FuncContext);
     const sm = React.useContext(NetworkContext)
 
     function createNewFile() {
@@ -21,10 +21,6 @@ export default function EditorSidePanel({ files }: { files: string[] }) {
         if (newFileName) {
             sm.emit('create_new_file', newFileName);
         }
-    }
-
-    function openProjectDetails() {
-        
     }
 
     return (

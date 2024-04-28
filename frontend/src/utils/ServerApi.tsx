@@ -33,6 +33,7 @@ export interface Project {
     language: string;
     created_at: Date;
     last_updated_at: Date;
+    allowed_users: User[];    
 }
 
 export interface Projects {

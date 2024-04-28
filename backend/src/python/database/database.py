@@ -286,6 +286,15 @@ class Database:
             )
             self.Session.execute(statement)
 
+    def remove_allowed_user(self, project_id: int, user_id: int) -> None:
+        self.__in_session()
+
+        statement = delete(AllowedUsers).where(
+            (AllowedUsers.c.user_id == user_id)
+            & (AllowedUsers.c.project_id == project_id)
+        )
+        self.Session.execute(statement)
+
     def validate_session(self, session_id: str) -> bool:
         """
         Validates a session by checking if it exists AND if it hasn't expired.

@@ -19,15 +19,18 @@ import Box from '@mui/material/Box';
 import CloseIcon from '@mui/icons-material/Close';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
+import ProjectDetailsDialog from './components/ProjectDetailsDialog';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
-export const EditorContext = React.createContext<{ editor: monaco.editor.IStandaloneCodeEditor | null, switchFile: (file: string) => void }>({ editor: null, switchFile: () => { } });
+export const EditorContext = React.createContext<monaco.editor.IStandaloneCodeEditor | null>(null!);
 export const NetworkContext = React.createContext<SocketManager>(null!);
-export const ProjectContext = React.createContext<Project>(null!);
+export const FuncContext = React.createContext<{ switchFile: (file: string) => void, openProjectDetails: () => void }>(null!);
 
 export default function EditorPage() {
   const editor = React.useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const [fileStructure, setFileStructure] = React.useState<string[]>([]);
-  const [project, setProject] = React.useState<Project>(null!);
+  const [fileStructure, setFileStructure] = React.useState<string[] | null>(null);
+  const [project, setProject] = React.useState<Project | null>(null);
   const navigate = useNavigate();
 
   const [doc, setDoc] = React.useState<Y.Doc>(null!);
@@ -37,6 +40,8 @@ export default function EditorPage() {
   const { project_id, current_file } = useParams();
 
   const [errorCode, setErrorCode] = React.useState<number>(null!);
+
+  const [error, setError] = React.useState<string | null>(null);
 
   const sm = React.useMemo(() => {
     return SocketManager.getInstance();
@@ -55,27 +60,10 @@ export default function EditorPage() {
 
   // Fetches the project data from the server upon loading the page
   React.useEffect(() => {
-    sendRequest<ProjectResponse>(`/api/projects/${project_id}`, 'GET')
-      .then((res) => {
-        if (res.success) {
-          setProject(res.data);
-          sm.emit('get_file_structure');
-        }
-      }).catch((err) => {
-        if (err.status === 403) {
-          // Displays the 403 page if the user is not authorized to view the project
-          setErrorCode(403);
-
-        } else if (err.status === 404) {
-          // Displays the 404 page if the project does not exist
-          setErrorCode(404);
-        }
-        else {
-          // Displays the 500 page if an unknown error occurs
-          setErrorCode(500);
-          console.error(err);
-        }
-      });
+    console.log('Fetching project data');
+    getProject().then(() => {
+      sm.emit('get_file_structure');
+    })
   }, []);
 
   // Checks if the current file is in the file structure
@@ -84,7 +72,7 @@ export default function EditorPage() {
       return;
     }
 
-    if (!fileStructure.includes(current_file)) {
+    if (!fileStructure?.includes(current_file)) {
       console.error('File not found in file structure:', current_file, fileStructure)
       setErrorCode(404);
     }
@@ -137,6 +125,88 @@ export default function EditorPage() {
     console.log('MonacoBinding created for:', uri_path);
   }
 
+  function getProject() {
+    return sendRequest<ProjectResponse>(`/api/projects/${project_id}`, 'GET')
+      .then((res) => {
+        if (res.success) {
+          return res.data;
+        } else {
+          throw res.data.error;
+        }
+      }).catch((err) => {
+        if (err.status === 403) {
+          // Displays the 403 page if the user is not authorized to view the project
+          setErrorCode(403);
+        } else if (err.status === 404) {
+          // Displays the 404 page if the project does not exist
+          setErrorCode(404);
+        }
+        else {
+          // Displays the 500 page if an unknown error occurs
+          setErrorCode(500);
+          console.error(err);
+        }
+        throw err;
+      });
+  }
+
+  function openProjectDetails() {
+    getProject().then((project) => {
+      setProject(project);
+    });
+  }
+
+  function onAddUser(userEmail: string): Promise<string | null> {
+    setError(null);
+    return sendRequest(`/api/projects/${project_id}/addUser`, 'POST', { email: userEmail })
+      .then((res) => {
+        if (res.success) {
+          console.log('User added successfully');
+          return null;
+        } else {
+          console.error('Failed to add user:', res.data.error);
+          setError(res.data.error);
+          return res.data.error;
+        }
+      })
+      .catch((err) => {
+        let responseJSON = err.responseJSON;
+        if (responseJSON.data && responseJSON.data.error) {
+          console.error(responseJSON.data.error);
+          setError(responseJSON.data.error);
+          return null;
+        }
+        console.error('An error occurred:', err);
+        return null;
+      });
+  }
+
+  function onRemoveUser(userEmail: string): Promise<string | null> {
+    setError(null);
+    return sendRequest(`/api/projects/${project_id}/removeUser`, 'POST', { email: userEmail })
+      .then((res) => {
+        if (res.success) {
+          console.log('User removed successfully');
+          setProject({ ...project!, allowed_users: project!.allowed_users.filter((user) => user.email !== userEmail) });
+          return null;
+        } else {
+          console.error('Failed to remove user:', res.data.error);
+          setError(res.data.error);
+          return res.data.error;
+        }
+      })
+      .catch((err) => {
+        let responseJSON = err.responseJSON;
+        if (responseJSON.data && responseJSON.data.error) {
+          console.error(responseJSON.data.error);
+          setError(responseJSON.data.error);
+          return null;
+        }
+        console.error('An error occurred:', err);
+        return null;
+      });
+  }
+
   function switchFile(file: string) {
     navigate(`/projects/${project_id}/${file}`);
   }
@@ -145,14 +215,14 @@ export default function EditorPage() {
     return <ErrorPage code={errorCode}></ErrorPage>;
   }
 
-  if (project == null) {
+  if (fileStructure == null || sm == null) {
     return <LoadingPage></LoadingPage>;
   }
 
   return (
-    <EditorContext.Provider value={{ editor: editor.current, switchFile }}>
+    <EditorContext.Provider value={editor.current}>
       <NetworkContext.Provider value={sm}>
-        <ProjectContext.Provider value={project}>
+        <FuncContext.Provider value={{ switchFile: switchFile, openProjectDetails: openProjectDetails }}>
           <Grid container component="main" sx={{ height: '100vh' }}>
             <CssBaseline />
             <Grid item xs={3}>
@@ -195,7 +265,16 @@ export default function EditorPage() {
               </Paper>
             </Grid>
           </Grid>
-        </ProjectContext.Provider>
+          <Snackbar
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            open={error !== null}
+            autoHideDuration={6000}
+            onClose={() => setError(null)}
+          >
+            <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
+          </Snackbar>
+          <ProjectDetailsDialog open={project != null} onClose={() => setProject(null)} project={project} onAddUser={onAddUser} onRemoveUser={onRemoveUser} />
+        </FuncContext.Provider>
       </NetworkContext.Provider>
     </EditorContext.Provider>
   );
