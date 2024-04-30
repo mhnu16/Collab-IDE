@@ -19,8 +19,8 @@ export default function ProjectCard({ project, deleteProject }: { project: Proje
             }}
         >
             <Grid container direction={'column'} sx={{ height: '100%' }}>
-                <Grid item xs={3} width={'100%'}>
-                    <Typography width={'100%'} variant='h4' sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.name}</Typography>
+                <Grid item xs={3} width={'100%'} sx={{ overflow: 'clip'}}>
+                    <Typography width={'100%'} variant='h5' sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.name}</Typography>
                 </Grid>
                 <Grid item xs={6} width={'100%'} sx={{ overflow: 'hidden' }}>
                     <Typography width={'100%'} height={'100%'} variant='body1'>{project.description}</Typography>
