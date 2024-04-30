@@ -1,7 +1,6 @@
 import express from 'express';
 import axios from 'axios';
 import http from 'http';
-import https from 'https';
 import { Server, Socket } from 'socket.io';
 import { LeveldbPersistence } from 'y-leveldb';
 import { YSocketIO, Document } from 'y-socket.io/dist/server';
@@ -48,11 +47,14 @@ const yio = new YSocketIO(io, {
 yio.on('document-update', (doc: Document, update: Uint8Array) => {
     let content = Y.decodeUpdate(update).structs.map((struct) => {
         if (struct instanceof Y.Item) {
-            return struct.content;
+            return struct.content.getContent().join('');
         }
         return '';
     }).join('');
-    console.log(`[document-update] Doc: ${doc.name}, Update:`, content);
+    if (content.length > 100) {
+        content = content.substring(0, 100) + '...';
+    }
+    console.log(`[document-update] Doc: ${doc.name}, Update:\n`, content);
 });
 
 yio.on('document-destroy', (doc: Document) => {
