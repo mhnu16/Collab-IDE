@@ -84,4 +84,4 @@ def main(dev_mode=False):
 
 
 if __name__ == "__main__":
-    main(dev_mode=True)
+    main(dev_mode=False)

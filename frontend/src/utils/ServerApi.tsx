@@ -19,12 +19,6 @@ export interface User {
     username: string;
 }
 
-interface FileSystemObject {
-    // A map of the filesystem. The key is the name of the file or directory, 
-    // and the value is null if it is a file, or another FileSystemObject if it is a directory (recursively defined)
-    [key: string]: null | FileSystemObject;
-}
-
 export interface Project {
     id: string;
     project_id: string;

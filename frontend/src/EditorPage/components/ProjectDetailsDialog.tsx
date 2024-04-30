@@ -15,7 +15,6 @@ import Typography from "@mui/material/Typography";
 
 import { Project } from "../../utils/ServerApi";
 import Divider from "@mui/material/Divider";
-import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 
 interface ProjectDetailsDialogProps {

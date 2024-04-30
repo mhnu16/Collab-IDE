@@ -85,10 +85,6 @@ export default function HomePage() {
       });
   }
 
-  function openProjectDialog() {
-    setOpenDialog(true)
-  }
-
   function handleLogout() {
     auth.logout().then(() => {
       navigate('/login')
