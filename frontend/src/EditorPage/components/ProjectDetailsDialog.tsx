@@ -23,6 +23,7 @@ interface ProjectDetailsDialogProps {
     project: Project | null;
     onAddUser: (userEmail: string) => void;
     onRemoveUser: (userEmail: string) => void;
+    onExportProject: () => void;
 }
 
 export default function ProjectDetailsDialog({
@@ -31,6 +32,7 @@ export default function ProjectDetailsDialog({
     project,
     onAddUser,
     onRemoveUser,
+    onExportProject,
 }: ProjectDetailsDialogProps) {
     const [userEmail, setUserEmail] = React.useState("");
 
@@ -72,6 +74,10 @@ export default function ProjectDetailsDialog({
                         onChange={(e) => setUserEmail(e.target.value)}
                     />
                     <Button onClick={() => onAddUser(userEmail)}>Add User</Button>
+                    <Divider />
+                    <Button variant="contained" color="primary" onClick={() => onExportProject()}>
+                        Export Project
+                    </Button>
                 </Box>
             </DialogContent>
             <DialogActions>

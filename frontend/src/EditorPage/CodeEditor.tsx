@@ -53,8 +53,8 @@ export default function EditorPage() {
       setFileStructure(data.files);
     });
 
-    sm.on('created_new_file', (data) => {
-      setFileStructure(data.files);
+    sm.on('exported_project', (data) => {
+      console.log('Exported project:', data);
     });
   }, []);
 
@@ -207,6 +207,10 @@ export default function EditorPage() {
       });
   }
 
+  function onExportProject() {
+    sm.emit('export_project');
+  }
+
   function switchFile(file: string) {
     navigate(`/projects/${project_id}/${file}`);
   }
@@ -273,7 +277,14 @@ export default function EditorPage() {
           >
             <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
           </Snackbar>
-          <ProjectDetailsDialog open={project != null} onClose={() => setProject(null)} project={project} onAddUser={onAddUser} onRemoveUser={onRemoveUser} />
+          <ProjectDetailsDialog
+            open={project != null}
+            onClose={() => setProject(null)}
+            project={project}
+            onAddUser={onAddUser}
+            onRemoveUser={onRemoveUser}
+            onExportProject={onExportProject}
+          />
         </FuncContext.Provider>
       </NetworkContext.Provider>
     </EditorContext.Provider>

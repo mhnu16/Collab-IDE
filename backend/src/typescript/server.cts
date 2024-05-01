@@ -5,6 +5,8 @@ import { Server, Socket } from 'socket.io';
 import { LeveldbPersistence } from 'y-leveldb';
 import { YSocketIO, Document } from 'y-socket.io/dist/server';
 import * as Y from 'yjs';
+import JSZip from 'jszip';
+import { promises as fs } from 'fs';
 
 const app = express();
 
@@ -90,6 +92,24 @@ async function deleteFile(project_id: string, file_name: string): Promise<boolea
         console.error(err);
         return false;
     });
+}
+
+async function exportProject(project_id: string): Promise<boolean> {
+    try {
+        const docNames = await persistence.getAllDocNames();
+        let files = docNames.filter((docName: string) => docName.startsWith(project_id + '/')).map((docName: string) => docName.split('/')[1]);
+        let zip = new JSZip();
+        for (const file of files) {
+            const ydoc = await persistence.getYDoc(project_id + '/' + file);
+            zip.file(file, ydoc.getText('monaco').toJSON());
+        }
+        const content = await zip.generateAsync({ type: 'nodebuffer' });
+        await fs.writeFile('project.zip', content);
+        return true;
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
 }
 
 io.use((socket, next) => {
@@ -179,6 +199,19 @@ io.use((socket, next) => {
                             console.log(`[delete_file] Deleted file: ${fileNameString}`);
                         }
                     });
+                }
+            });
+        });
+
+        socket.on('export_project', () => {
+            console.log(`[export_project] Project ID: ${project_id}`);
+            exportProject(project_id).then((success) => {
+                if (success) {
+                    console.log(`[export_project] Exported project: ${project_id}`);
+                    io.to(project_id).emit('export_projected', { success: true });
+                } else {
+                    console.error(`[export_project] Failed to export project: ${project_id}`);
+                    io.to(project_id).emit('export_projected', { success: false });
                 }
             });
         });
