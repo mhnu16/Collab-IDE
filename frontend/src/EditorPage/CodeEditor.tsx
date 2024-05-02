@@ -251,7 +251,7 @@ export default function EditorPage() {
                         <FileHeader filename={current_file} onClick={() => switchFile('')}></FileHeader>
                         <Editor
                           path={current_file}
-                          defaultLanguage='typescript'
+                          defaultLanguage={getLanguageFromFilename(current_file)}
                           loading={<LoadingPage></LoadingPage>}
                           onMount={handleEditorDidMount}
                           saveViewState={false}
@@ -309,4 +309,49 @@ function FileHeader(props: { filename: string, onClick: () => void }) {
       </Button>
     </Box>
   );
+}
+
+function getLanguageFromFilename(filename: string): string {
+  /**
+   * Gets the language identifier from the filename for the Monaco editor
+   * 
+   * @param filename The name of the file
+   * @returns The language identifier for the Monaco editor
+   */
+  let extension = filename.split('.').pop();
+  if (extension == null) {
+    return 'plaintext';
+  }
+  switch (extension) {
+    case 'js':
+      return 'javascript';
+    case 'jsx':
+      return 'javascript';
+    case 'ts':
+      return 'typescript';
+    case 'tsx':
+      return 'typescript';
+    case 'py':
+      return 'python';
+    case 'java':
+      return 'java';
+    case 'c':
+      return 'c';
+    case 'cpp':
+      return 'cpp';
+    case 'html':
+      return 'html';
+    case 'css':
+      return 'css';
+    case 'json':
+      return 'json';
+    case 'xml':
+      return 'xml';
+    case 'yaml':
+      return 'yaml';
+    case 'md':
+      return 'markdown';
+    default:
+      return 'plaintext';
+  }
 }
