@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { Project } from "../../utils/ServerApi";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -6,8 +5,6 @@ import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 
 export default function ProjectCard({ project, deleteProject }: { project: Project, deleteProject: (project_id: string) => void }) {
-    const navigate = useNavigate();
-
     return (
         <Paper
             elevation={3}
@@ -26,7 +23,7 @@ export default function ProjectCard({ project, deleteProject }: { project: Proje
                     <Typography width={'100%'} height={'100%'} variant='body1'>{project.description}</Typography>
                 </Grid>
                 <Grid container item xs={3} justifyContent={'space-between'}>
-                    <Button onClick={() => navigate(`/projects/${project.project_id}`)}>Open</Button>
+                    <Button onClick={() => window.location.href = `/projects/${project.project_id}`}>Open</Button>
                     <Button onClick={() => deleteProject(project.project_id)}>Delete</Button>
                 </Grid>
             </Grid>
