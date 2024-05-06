@@ -112,6 +112,12 @@ async function exportProject(project_id: string): Promise<boolean> {
     }
 }
 
+async function createNewFile(project_id: string, file_name: string) {
+    const ydoc = new Y.Doc();
+    ydoc.getText('monaco').insert(0, '');
+    persistence.storeUpdate(project_id + '/' + file_name, Y.encodeStateAsUpdate(ydoc));
+}
+
 io.use((socket, next) => {
     let handshake = socket.handshake;
     // Extracts the project_id and the session_id from the cookies
@@ -174,9 +180,7 @@ io.use((socket, next) => {
             console.log(`[create_new_file] Project ID: ${project_id}, File Name: ${file_name}`);
             getFileNames(project_id).then((fileNames) => {
                 if (!fileNames.includes(file_name)) {
-                    const ydoc = new Y.Doc();
-                    ydoc.getText('monaco').insert(0, '');
-                    persistence.storeUpdate(project_id + '/' + file_name, Y.encodeStateAsUpdate(ydoc));
+                    createNewFile(project_id, file_name);
                     let files = [...fileNames, file_name];
                     console.log(`[create_new_file] Emitting file_structure_update: ${files}`);
                     io.to(project_id).emit('file_structure_update', { files: [...fileNames, file_name] });
