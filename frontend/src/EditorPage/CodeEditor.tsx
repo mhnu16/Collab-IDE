@@ -33,30 +33,37 @@ export default function EditorPage() {
   const [project, setProject] = React.useState<Project | null>(null);
   const navigate = useNavigate();
 
-  const [doc, setDoc] = React.useState<Y.Doc>(null!);
-  const [provider, setProvider] = React.useState<SocketIOProvider>(null!);
-  const [monacoBinding, setMonacoBinding] = React.useState<MonacoBinding>(null!);
+  const doc = React.useRef<Y.Doc>(null!);
+  const provider = React.useRef<SocketIOProvider>(null!);
+  const monacoBinding = React.useRef<MonacoBinding>(null!);
 
   const { project_id, current_file } = useParams();
 
   const [errorCode, setErrorCode] = React.useState<number>(null!);
 
   const [error, setError] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
   const sm = React.useMemo(() => {
-    return SocketManager.getInstance();
+    console.log('Creating new SocketManager for:', project_id);
+    return SocketManager.getInstance(project_id!);
   }, []);
 
   // Sets up the socket event listeners
   React.useEffect(() => {
+    sm.on('connect', () => {
+      console.log('Connected to server');
+    });
+
     sm.on('file_structure_update', (data) => {
       setFileStructure(data.files);
+      setLoading(false);
     });
 
     sm.on('exported_project', (data) => {
       console.log('Exported project:', data);
     });
-  }, []);
+  }, [sm]);
 
   // Fetches the project data from the server upon loading the page
   React.useEffect(() => {
@@ -73,7 +80,7 @@ export default function EditorPage() {
     }
 
     if (!fileStructure?.includes(current_file)) {
-      console.error('File not found in file structure:', current_file, fileStructure)
+      console.error(`File ${current_file} not found in file structure`, fileStructure)
       setErrorCode(404);
     }
     setErrorCode(null!);
@@ -81,30 +88,31 @@ export default function EditorPage() {
 
   function handleEditorDidMount(new_editor: monaco.editor.IStandaloneCodeEditor, _monaco: typeof monaco) {
     editor.current = new_editor;
-    editor.current.focus();
-
     console.log('Editor mounted');
-
+    
     setupYjs();
+
+    editor.current.onDidDispose(() => {
+      console.log('Editor disposed, destroying Yjs');
+      monacoBinding.current.destroy();
+      // doc.current.destroy();
+      provider.current.destroy();
+    });
 
     editor.current.onDidChangeModel((e: monaco.editor.IModelChangedEvent) => {
       if (e.newModelUrl == null) {
         return;
       }
+
+      console.log('Model changed:', e.newModelUrl.path);
+      console.log('Disconnecting Provider socket');
+      provider.current.disconnect();
+      
       setupYjs();
     });
   }
 
   function setupYjs() {
-    if (doc) {
-      doc.destroy();
-    }
-    if (provider) {
-      provider.destroy();
-    }
-    if (monacoBinding) {
-      monacoBinding.destroy();
-    }
     if (editor.current == null || editor.current.getModel() == null) {
       return;
     }
@@ -112,20 +120,18 @@ export default function EditorPage() {
     let uri_path = editor.current.getModel()!.uri.path.slice(1);
 
     console.log('Creating new doc for:', uri_path);
-    const _doc = new Y.Doc();
-    setDoc(_doc);
+    doc.current = new Y.Doc();
 
     console.log('Creating provider for:', uri_path);
-    const _provider = new SocketIOProvider('https://localhost', project_id + '/' + uri_path, _doc, {
+    provider.current = new SocketIOProvider('https://localhost', project_id + '/' + uri_path, doc.current, {
     });
-    setProvider(_provider);
 
-    const _monacoBinding = new MonacoBinding(_doc.getText('monaco'), editor.current!.getModel()!, new Set([editor.current!]), _provider.awareness);
-    setMonacoBinding(_monacoBinding);
-    console.log('MonacoBinding created for:', uri_path);
+    console.log('Creating MonacoBinding for:', uri_path);
+    monacoBinding.current = new MonacoBinding(doc.current.getText('monaco'), editor.current.getModel()!, new Set([editor.current]), provider.current.awareness);
   }
 
-  function getProject() {
+
+  async function getProject() {
     return sendRequest<ProjectResponse>(`/api/projects/${project_id}`, 'GET')
       .then((res) => {
         if (res.success) {
@@ -156,7 +162,7 @@ export default function EditorPage() {
     });
   }
 
-  function onAddUser(userEmail: string): Promise<string | null> {
+  async function onAddUser(userEmail: string): Promise<string | null> {
     setError(null);
     return sendRequest(`/api/projects/${project_id}/addUser`, 'POST', { email: userEmail })
       .then((res) => {
@@ -181,7 +187,7 @@ export default function EditorPage() {
       });
   }
 
-  function onRemoveUser(userEmail: string): Promise<string | null> {
+  async function onRemoveUser(userEmail: string): Promise<string | null> {
     setError(null);
     return sendRequest(`/api/projects/${project_id}/removeUser`, 'POST', { email: userEmail })
       .then((res) => {
@@ -219,7 +225,7 @@ export default function EditorPage() {
     return <ErrorPage code={errorCode}></ErrorPage>;
   }
 
-  if (fileStructure == null || sm == null) {
+  if (loading) {
     return <LoadingPage></LoadingPage>;
   }
 
@@ -230,7 +236,7 @@ export default function EditorPage() {
           <Grid container component="main" sx={{ height: '100vh' }}>
             <CssBaseline />
             <Grid item xs={3}>
-              <EditorSidePanel files={fileStructure}></EditorSidePanel>
+              <EditorSidePanel files={fileStructure!}></EditorSidePanel>
             </Grid>
             <Grid item xs={9}>
               <Paper elevation={2} sx={{ height: '100%', width: '100%' }}>
@@ -238,11 +244,6 @@ export default function EditorPage() {
                   if (current_file == null) {
                     return (
                       <NoFileSelectedScreen />
-                    );
-                  }
-                  else if (sm == null) {
-                    return (
-                      <LoadingPage></LoadingPage>
                     );
                   }
                   return (

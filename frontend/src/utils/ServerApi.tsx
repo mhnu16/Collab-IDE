@@ -81,29 +81,27 @@ export interface File {
 
 
 export class SocketManager {
-    private static instance: SocketManager;
+    private static instances: Map<string, SocketManager> = new Map<string, SocketManager>();
     private socket: Socket;
     // private provider?: SocketIOProvider;
     // private ydoc?: Y.Doc;
     // private ytext?: Y.Text;
 
-    private constructor() {
-        this.socket = io('https://localhost');
-
-        this.socket.on('connect', () => {
-            console.log(`Connected to server with id: ${this.socket.id}`);
-        });
-
-        this.socket.on('disconnect', () => {
-            console.log('Disconnected from server');
+    private constructor(project_id: string) {
+        this.socket = io({
+            path: '/socket.io',
+            query: {
+                project_id: project_id
+            }
         });
     }
 
-    public static getInstance(): SocketManager {
-        if (!SocketManager.instance) {
-            SocketManager.instance = new SocketManager();
+    public static getInstance(project_id: string): SocketManager {
+        if (!SocketManager.instances.has(project_id)) {
+            console.log("Creating new instance for project_id: ", project_id);
+            SocketManager.instances.set(project_id, new SocketManager(project_id));
         }
-        return SocketManager.instance;
+        return SocketManager.instances.get(project_id)!;
     }
 
     public on(event: string, callback: (data: any) => void): void {

@@ -57,6 +57,7 @@ export default function EditorSidePanel({ files }: { files: string[] }) {
                                         }}>{file}</Typography>
                                     </Button>
                                     <Button onClick={() => {
+                                        switchFile('')
                                         sm.emit('delete_file', file)
                                     }}>
                                         <DeleteIcon />

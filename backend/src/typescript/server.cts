@@ -54,7 +54,7 @@ yio.on('document-update', (doc: Document, update: Uint8Array) => {
         return '';
     }).join('');
     if (content.length > 100) {
-        content = content.substring(0, 100) + '...';
+        content = content.substring(0, 100) + '...' + `(${content.length} characters)`
     }
     console.log(`[document-update] Doc: ${doc.name}, Update:\n`, content);
 });
@@ -77,7 +77,8 @@ const persistence = (yio as any).persistence.provider as LeveldbPersistence; // 
 
 async function getFileNames(project_id: string): Promise<string[]> {
     return persistence.getAllDocNames().then((docNames: string[]) => {
-        return docNames.filter((docName: string) => docName.startsWith(project_id + '/')).map((docName: string) => docName.split('/')[1]);
+        let files = docNames.filter((docName: string) => docName.startsWith(project_id + '/')).map((docName: string) => docName.split('/')[1]);
+        return files;
     }).catch((err: Error) => {
         console.error(err);
         return [];
@@ -114,16 +115,17 @@ async function exportProject(project_id: string): Promise<boolean> {
 
 io.use((socket, next) => {
     let handshake = socket.handshake;
-    // Extracts the project_id and the session_id from the cookies
+    // Extracts the the session_id from the cookies and the project_id from the query parameters
     let cookies = handshake.headers.cookie;
     if (!cookies) {
         return false;
     }
-    let project_id = (cookies.split(';').find((cookie: string) => cookie.includes('project_id'))?.split('=')[1]) as string;
+    let project_id = handshake.query.project_id as string;
     let session_id = (cookies.split(';').find((cookie: string) => cookie.includes('session_id'))?.split('=')[1]) as string;
-    if (!project_id || !session_id) {
+    if (!session_id || !project_id) {
         return false;
     }
+
     // Checks if the user has access to the project by sending a request to the backend server requesting the project details
     // The backend server should respond with a 200 status code if the user has access to the project and a 403 status code if the user does not have access to the project
     axios.get(`http://localhost:5000/api/projects/${project_id}`, {
@@ -170,33 +172,37 @@ io.use((socket, next) => {
             });
         });
 
-        socket.on('create_new_file', (file_name: string) => {
-            console.log(`[create_new_file] Project ID: ${project_id}, File Name: ${file_name}`);
+        socket.on('create_new_file', (filename: string[]) => {
+            let filename_string = filename[0];
+            console.log(`[create_new_file] Project ID: ${project_id}, File Name: ${filename_string}`);
             getFileNames(project_id).then((fileNames) => {
-                if (!fileNames.includes(file_name)) {
+                if (!fileNames.includes(filename_string)) {
                     const ydoc = new Y.Doc();
                     ydoc.getText('monaco').insert(0, '');
-                    persistence.storeUpdate(project_id + '/' + file_name, Y.encodeStateAsUpdate(ydoc));
-                    let files = [...fileNames, file_name];
-                    console.log(`[create_new_file] Emitting file_structure_update: ${files}`);
-                    io.to(project_id).emit('file_structure_update', { files: [...fileNames, file_name] });
-                    console.log(`[create_new_file] Created new file: ${file_name}`);
+                    persistence.storeUpdate(project_id + '/' + filename_string, Y.encodeStateAsUpdate(ydoc)).then(() => {
+                        console.log(`[create_new_file] Created new file: ${project_id}/${filename_string}`);
+                        getFileNames(project_id).then((fileNames) => {
+                            console.log(`[create_new_file] Emitting file_structure_update: ${fileNames}`);
+                            io.to(project_id).emit('file_structure_update', { files: fileNames });
+                        });
+                    });
                 }
             });
         });
 
-        socket.on('delete_file', (fileName: string[] /* For some reason */) => {
-            let fileNameString = fileName[0];
+        socket.on('delete_file', (filename: string[]) => {
+            let fileNameString = filename[0];
             console.log(`[delete_file] Project ID: ${project_id}, File Name: ${fileNameString}`);
             getFileNames(project_id).then((fileNames) => {
                 if (fileNames.includes(fileNameString)) {
                     console.log(`[delete_file] Deleting file: ${project_id}/${fileNameString}`);
                     deleteFile(project_id, fileNameString).then((success) => {
                         if (success) {
-                            let files = fileNames.filter((fileName) => fileName !== fileNameString);
-                            console.log(`[delete_file] Emitting file_structure_update: ${files}`);
-                            io.to(project_id).emit('file_structure_update', { files: files });
-                            console.log(`[delete_file] Deleted file: ${fileNameString}`);
+                            getFileNames(project_id).then((files) => {
+                                console.log(`[delete_file] Emitting file_structure_update: ${files}`);
+                                io.to(project_id).emit('file_structure_update', { files: files });
+                                console.log(`[delete_file] Deleted file: ${fileNameString}`);
+                            });
                         }
                     });
                 }

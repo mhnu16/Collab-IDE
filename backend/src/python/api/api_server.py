@@ -162,9 +162,6 @@ class ApiServer:
                     return self.json_response(False, {"error": "Access denied"}, 403)
 
                 response = self.json_response(True, project.to_dict())
-                response.set_cookie(
-                    "project_id", project_id, httponly=True, samesite="Strict"
-                )
                 return response
 
         @self.app.route("/api/projects/<project_id>/addUser", methods=["POST"])
