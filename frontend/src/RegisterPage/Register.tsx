@@ -46,6 +46,21 @@ export default function RegisterPage() {
             return;
         }
 
+        if (password.length < 8) {
+            setAlertMessages([...alertMessages, { msg: 'Password must be at least 8 characters long', severity: 'error' }]);
+            return;
+        }
+        else if (username.length < 4) {
+            setAlertMessages([...alertMessages, { msg: 'Username must be at least 4 characters long', severity: 'error' }]);
+            return;
+        }
+        // An email validation regex according to the RFC 5322 format
+        let regex = new RegExp("([!#-'*+/-9=?A-Z^-~-]+(\.[!#-'*+/-9=?A-Z^-~-]+)*|\"\(\[\]!#-[^-~ \t]|(\\[\t -~]))+\")@([!#-'*+/-9=?A-Z^-~-]+(\.[!#-'*+/-9=?A-Z^-~-]+)*|\[[\t -Z^-~]*])");
+        if (!regex.test(email)) {
+            setAlertMessages([...alertMessages, { msg: 'Invalid email address', severity: 'error' }]);
+            return;
+        }
+
         auth.register({ username, email: email, password: password }).then((res) => {
             if (res.success) {
                 window.location.href = '/';
@@ -100,9 +115,10 @@ export default function RegisterPage() {
                             margin="normal"
                             required
                             fullWidth
-                            id='text'
                             label='Username'
                             name='username'
+                            id='text'
+                            type='text'
                             autoComplete='username'
                             autoFocus
                         />
@@ -110,19 +126,20 @@ export default function RegisterPage() {
                             margin="normal"
                             required
                             fullWidth
-                            id="email"
                             label="Email Address"
                             name="email"
+                            id="email"
+                            type="email"
                             autoComplete="email"
                         />
                         <TextField
                             margin="normal"
                             required
                             fullWidth
-                            name="password"
                             label="Password"
-                            type="password"
+                            name="password"
                             id="password"
+                            type="password"
                             autoComplete="current-password"
                         />
                         <Button

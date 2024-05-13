@@ -99,9 +99,10 @@ export default function LoginPage() {
                             margin="normal"
                             required
                             fullWidth
-                            id="email"
                             label="Email Address"
                             name="email"
+                            id="email"
+                            type="email"
                             autoComplete="email"
                             autoFocus
                         />
@@ -109,10 +110,10 @@ export default function LoginPage() {
                             margin="normal"
                             required
                             fullWidth
-                            name="password"
                             label="Password"
-                            type="password"
+                            name="password"
                             id="password"
+                            type="password"
                             autoComplete="current-password"
                         />
                         <Button
