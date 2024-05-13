@@ -126,6 +126,8 @@ io.use((socket, next) => {
         return false;
     }
 
+    console.log(`[use] Project ID: ${project_id}, Session ID: ${session_id}`);
+
     // Checks if the user has access to the project by sending a request to the backend server requesting the project details
     // The backend server should respond with a 200 status code if the user has access to the project and a 403 status code if the user does not have access to the project
     axios.get(`http://localhost:5000/api/projects/${project_id}`, {
@@ -146,17 +148,7 @@ io.use((socket, next) => {
     .on('connection', (socket: Socket) => {
         console.log(`[connection] Connected with user: ${socket.id}`);
 
-        let cookies = socket.handshake.headers.cookie;
-        if (!cookies) {
-            console.error('No cookies found');
-            return;
-        }
-        if (!cookies.includes('project_id')) {
-            console.error('No project_id cookie found');
-            return;
-        }
-
-        let project_id = (cookies.split(';').find((cookie: string) => cookie.includes('project_id'))?.split('=')[1]) as string;
+        let project_id = socket.handshake.query.project_id as string;
         socket.join(project_id);
 
 
