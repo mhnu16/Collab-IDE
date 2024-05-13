@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Table,
     create_engine,
+    or_,
     select,
     update,
     delete,
@@ -211,6 +212,11 @@ class Database:
         """
         self.__in_session()
 
+        # Check if the user already exists
+        user = self.select_from(User, or_(User.username == username, User.email == email))
+        if user:
+            return None
+
         hashed_password = self.hash_sha256(password)
         user = User(username=username, email=email, password=hashed_password)
         self.Session.add(user)
@@ -242,13 +248,12 @@ class Database:
         return None
 
     def add_project(
-        self, project_id: str, name: str, description: str, language: str, user_id: int
+        self, name: str, description: str, language: str, user_id: int
     ) -> Project | None:
         """
         Adds a project to the database.
 
         Args:
-            project_id: The id of the project.
             name: The name of the project.
             description: The description of the project.
             language: The language of the project.
@@ -259,6 +264,8 @@ class Database:
         """
 
         self.__in_session()
+
+        project_id = self.generate_id()
 
         project = Project(
             project_id=project_id,

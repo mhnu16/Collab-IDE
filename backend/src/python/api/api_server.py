@@ -114,9 +114,8 @@ class ApiServer:
                 with self.database.session_scope():
                     user_id = flask.g.user_id
 
-                    project_id = self.database.generate_id()
                     project = self.database.add_project(
-                        project_id, name, description, language, user_id
+                        name, description, language, user_id
                     )
 
                     if project:
