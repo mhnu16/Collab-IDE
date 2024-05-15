@@ -12,7 +12,7 @@ import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 
 
-export default function EditorSidePanel({ files }: { files: string[] }) {
+export default function EditorSidePanel({ files, openTerminal }: { files: string[], openTerminal: () => void }) {
     const { switchFile, openProjectDetails } = React.useContext(FuncContext);
     const sm = React.useContext(NetworkContext)
 
@@ -27,9 +27,10 @@ export default function EditorSidePanel({ files }: { files: string[] }) {
         <Paper elevation={6} sx={{ height: '100%', width: '100%' }}>
             <Grid container direction='column'>
                 <Grid item xs={2}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-around', my: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-around', my: 2, mx: 1, gap: 1 }}>
                         <Button variant='outlined' onClick={() => window.location.href = '/'}>To Home</Button>
                         <Button variant='outlined' onClick={openProjectDetails}>Project Details</Button>
+                        <Button variant='outlined' onClick={openTerminal}>Start Container</Button>
                     </Box>
                 </Grid>
                 <Grid item xs={2}>
@@ -71,4 +72,3 @@ export default function EditorSidePanel({ files }: { files: string[] }) {
         </Paper>
     );
 }
-

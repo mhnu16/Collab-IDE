@@ -22,6 +22,7 @@ import Paper from '@mui/material/Paper';
 import ProjectDetailsDialog from './components/ProjectDetailsDialog';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import Terminal from './components/Terminal';
 
 export const EditorContext = React.createContext<monaco.editor.IStandaloneCodeEditor | null>(null!);
 export const NetworkContext = React.createContext<SocketManager>(null!);
@@ -44,12 +45,14 @@ export default function EditorPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
 
+  const [openTerminal, setOpenTerminal] = React.useState(false);
+
   const sm = React.useMemo(() => {
     console.log('Creating new SocketManager for:', project_id);
     return SocketManager.getInstance(project_id!);
   }, []);
 
-  // Sets up the socket event listeners
+  // Event listeners for the socket manager
   React.useEffect(() => {
     sm.on('connect', () => {
       console.log('Connected to server');
@@ -65,7 +68,7 @@ export default function EditorPage() {
     });
   }, [sm]);
 
-  // Fetches the project data from the server upon loading the page
+  // Fetches the project data when the page is loaded
   React.useEffect(() => {
     console.log('Fetching project data');
     getProject().then(() => {
@@ -89,7 +92,7 @@ export default function EditorPage() {
   function handleEditorDidMount(new_editor: monaco.editor.IStandaloneCodeEditor, _monaco: typeof monaco) {
     editor.current = new_editor;
     console.log('Editor mounted');
-    
+
     setupYjs();
 
     editor.current.onDidDispose(() => {
@@ -107,7 +110,7 @@ export default function EditorPage() {
       console.log('Model changed:', e.newModelUrl.path);
       console.log('Disconnecting Provider socket');
       provider.current.disconnect();
-      
+
       setupYjs();
     });
   }
@@ -236,37 +239,40 @@ export default function EditorPage() {
           <Grid container component="main" sx={{ height: '100vh' }}>
             <CssBaseline />
             <Grid item xs={3}>
-              <EditorSidePanel files={fileStructure!}></EditorSidePanel>
+              <EditorSidePanel files={fileStructure!} openTerminal={() => setOpenTerminal(true)} />
             </Grid>
             <Grid item xs={9}>
-              <Paper elevation={2} sx={{ height: '100%', width: '100%' }}>
-                {(() => {
-                  if (current_file == null) {
+              <Paper elevation={2} sx={{ height: '100%', width: '100%', position: 'relative' }}>
+                <Box display='flex' flexDirection='column' justifyContent='center' alignItems='center' height='100%'>
+                  {(() => {
+                    if (current_file == null) {
+                      return (
+                        <NoFileSelectedScreen />
+                      );
+                    }
                     return (
-                      <NoFileSelectedScreen />
-                    );
-                  }
-                  return (
-                    <Box height='100%'>
-                      <Box display='flex' flexDirection='column' justifyContent='center' alignItems='center' height='100%'>
+                      <>
                         <FileHeader filename={current_file} onClick={() => switchFile('')}></FileHeader>
-                        <Editor
-                          path={current_file}
-                          defaultLanguage={getLanguageFromFilename(current_file)}
-                          loading={<LoadingPage></LoadingPage>}
-                          onMount={handleEditorDidMount}
-                          saveViewState={false}
-                          theme='vs-dark'
-                          options={{
-                            minimap: {
-                              enabled: false
-                            }
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                  );
-                })()}
+                        <Box height='100%' width='100%'>
+                          <Editor
+                            path={current_file}
+                            defaultLanguage={getLanguageFromFilename(current_file)}
+                            loading={<LoadingPage></LoadingPage>}
+                            onMount={handleEditorDidMount}
+                            saveViewState={false}
+                            theme='vs-dark'
+                            options={{
+                              minimap: {
+                                enabled: false
+                              }
+                            }}
+                          />
+                        </Box>
+                      </>
+                    );
+                  })()}
+                </Box>
+                {openTerminal && <Terminal closeTerminal={() => setOpenTerminal(false)} />}
               </Paper>
             </Grid>
           </Grid>
@@ -294,7 +300,7 @@ export default function EditorPage() {
 
 function NoFileSelectedScreen() {
   return (
-    <Box display='flex' flexDirection='column' justifyContent='center' alignItems='center' height='100%'>
+    <Box>
       <Typography variant='h2'>No File Selected</Typography>
       <Typography variant='body1'>Please select a file from the side panel to start editing.</Typography>
     </Box>
