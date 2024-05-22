@@ -1,10 +1,9 @@
-import { Server } from 'socket.io';
-import Y from 'yjs';
-import { YSocketIO, Document } from 'y-socket.io/dist/server';
 import axios from 'axios';
+import fs from 'fs';
+import { Server } from 'socket.io';
 import { LeveldbPersistence } from 'y-leveldb';
-import JSZip from 'jszip';
-import { promises as fs } from 'fs';
+import { Document, YSocketIO } from 'y-socket.io/dist/server';
+import Y from 'yjs';
 
 export default class yjsIO {
     yio: YSocketIO;
@@ -14,14 +13,15 @@ export default class yjsIO {
         this.yio = new YSocketIO(io, {
             levelPersistenceDir: './projects',
             authenticate(handshake) {
-                // Extracts the project_id and the session_id from the cookies
+                // Extracts the the session_id from the cookies and the project_id from the query parameters
                 let cookies = handshake.headers.cookie;
                 if (!cookies) {
                     return false;
                 }
-                let project_id = (cookies.split(';').find((cookie: string) => cookie.includes('project_id'))?.split('=')[1]) as string;
+                let project_id = handshake.query.project_id as string;
                 let session_id = (cookies.split(';').find((cookie: string) => cookie.includes('session_id'))?.split('=')[1]) as string;
                 if (!project_id || !session_id) {
+                    console.log(handshake)
                     return false;
                 }
                 // Checks if the user has access to the project by sending a request to the backend server requesting the project details
@@ -66,7 +66,8 @@ export default class yjsIO {
 
         this.yio.initialize();
 
-        this.persistence = (this.yio as any).persistence.provider as LeveldbPersistence; // This is a hacky way to get the persistence object
+        // This is a hack to access the private persistence property of the YSocketIO instance
+        this.persistence = (this.yio as any).persistence.provider as LeveldbPersistence;
     }
 
     async getProjectStructure(project_id: string): Promise<string[]> {
@@ -126,20 +127,24 @@ export default class yjsIO {
         });
     }
 
-    async exportProject(project_id: string): Promise<boolean> {
-        try {
-            const files = await this.getProjectStructure(project_id);
-            let zip = new JSZip();
-            for (const file of files) {
-                const content = await this.getFileContent(project_id, file);
-                zip.file(file, content);
-            }
-            const content = await zip.generateAsync({ type: 'nodebuffer' });
-            await fs.writeFile('project.zip', content);
-            return true;
-        } catch (err) {
-            console.error(err);
-            return false;
+    async exportProjectToDirectory(project_id: string) {
+        let files = await this.getProjectStructure(project_id);
+        let projectDir = `./projects-temp/${project_id}`;
+        if (!fs.existsSync(projectDir)) {
+            fs.mkdirSync(projectDir, { recursive: true });
         }
+        files.forEach(async (file) => {
+            let content = await this.getFileContent(project_id, file);
+            fs.writeFileSync(`${projectDir}/${file}`, content);
+        });
+        return projectDir;
+    }
+
+    async deleteProjectDirectory(project_id: string) {
+        let projectDir = `./projects-temp/${project_id}`;
+        if (fs.existsSync(projectDir)) {
+            fs.rmdirSync(projectDir, { recursive: true });
+        }
+        return projectDir;
     }
 }

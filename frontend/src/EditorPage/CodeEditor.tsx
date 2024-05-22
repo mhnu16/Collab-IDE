@@ -24,6 +24,30 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Terminal from './components/Terminal';
 
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
+import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+
+self.MonacoEnvironment = {
+  getWorker(_, label) {
+    if (label === 'json') {
+      return new jsonWorker();
+    }
+    if (label === 'css' || label === 'scss' || label === 'less') {
+      return new cssWorker();
+    }
+    if (label === 'html' || label === 'handlebars' || label === 'razor') {
+      return new htmlWorker();
+    }
+    if (label === 'typescript' || label === 'javascript') {
+      return new tsWorker();
+    }
+    return new editorWorker();
+  },
+};
+
 export const EditorContext = React.createContext<monaco.editor.IStandaloneCodeEditor | null>(null!);
 export const NetworkContext = React.createContext<SocketManager>(null!);
 export const FuncContext = React.createContext<{ switchFile: (file: string) => void, openProjectDetails: () => void }>(null!);
@@ -126,7 +150,10 @@ export default function EditorPage() {
     doc.current = new Y.Doc();
 
     console.log('Creating provider for:', uri_path);
-    provider.current = new SocketIOProvider('https://localhost', project_id + '/' + uri_path, doc.current, {
+    provider.current = new SocketIOProvider('https://localhost', project_id + '/' + uri_path, doc.current, {}, {
+      query: {
+        project_id: project_id
+      }
     });
 
     console.log('Creating MonacoBinding for:', uri_path);
