@@ -130,6 +130,7 @@ export default class yjsIO {
     async exportProjectToDirectory(project_id: string) {
         let files = await this.getProjectStructure(project_id);
         let projectDir = `./projects-temp/${project_id}`;
+        projectDir = fs.realpathSync(projectDir);
         if (!fs.existsSync(projectDir)) {
             fs.mkdirSync(projectDir, { recursive: true });
         }

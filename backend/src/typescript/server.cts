@@ -3,6 +3,7 @@ import axios from 'axios';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
 import yjsIO from './yjs-controller.cjs';
+import dockerController from './docker-controller.cjs';
 
 const app = express();
 
@@ -15,6 +16,8 @@ const io = new Server(server, {
 });
 
 const yjs = new yjsIO(io);
+
+const docker = new dockerController(io, yjs);
 
 io.use((socket, next) => {
     let handshake = socket.handshake;
@@ -57,6 +60,13 @@ io.use((socket, next) => {
 
         socket.on('disconnect', () => {
             console.log(`[disconnect] Disconnected user: ${socket.id}`);
+            // Check if the user is the last user in the room
+            let room = io.sockets.adapter.rooms.get(project_id);
+            if (!room || room.size === 0) {
+                console.log(`[disconnect] No more users in room: ${project_id}`);
+                // Stop the container
+                docker.stopContainer(project_id);
+            }
         });
 
         socket.on('get_file_structure', () => {
@@ -67,12 +77,12 @@ io.use((socket, next) => {
             });
         });
 
-        socket.on('create_new_file', (filename: string[]) => {
-            let filename_string = filename[0];
-            console.log(`[create_new_file] Project ID: ${project_id}, File Name: ${filename_string}`);
-            yjs.createNewFile(project_id, filename_string).then((success) => {
+        socket.on('create_new_file', (args: string[]) => {
+            let filename = args[0];
+            console.log(`[create_new_file] Project ID: ${project_id}, File Name: ${filename}`);
+            yjs.createNewFile(project_id, filename).then((success) => {
                 if (success) {
-                    console.log(`[create_new_file] Created new file: ${filename_string}`);
+                    console.log(`[create_new_file] Created new file: ${filename}`);
                     yjs.getProjectStructure(project_id).then((files) => {
                         console.log(`[create_new_file] Emitting file_structure_update: ${files}`);
                         io.to(project_id).emit('file_structure_update', { files: files });
@@ -81,32 +91,32 @@ io.use((socket, next) => {
             });
         });
 
-        socket.on('delete_file', (filename: string[]) => {
-            let fileNameString = filename[0];
-            console.log(`[delete_file] Project ID: ${project_id}, File Name: ${fileNameString}`);
-            console.log(`[delete_file] Deleting file: ${project_id}/${fileNameString}`);
-            yjs.deleteFile(project_id, fileNameString).then((success) => {
+        socket.on('delete_file', (args: string[]) => {
+            let filename = args[0];
+            console.log(`[delete_file] Project ID: ${project_id}, File Name: ${filename}`);
+            console.log(`[delete_file] Deleting file: ${project_id}/${filename}`);
+            yjs.deleteFile(project_id, filename).then((success) => {
                 if (success) {
                     yjs.getProjectStructure(project_id).then((files) => {
                         console.log(`[delete_file] Emitting file_structure_update: ${files}`);
                         io.to(project_id).emit('file_structure_update', { files: files });
-                        console.log(`[delete_file] Deleted file: ${fileNameString}`);
+                        console.log(`[delete_file] Deleted file: ${filename}`);
                     });
                 }
             });
         });
 
-        socket.on('export_project', () => {
-            console.log(`[export_project] Project ID: ${project_id}`);
-            yjs.exportProject(project_id).then((success) => {
-                if (success) {
-                    console.log(`[export_project] Exported project: ${project_id}`);
-                    io.to(project_id).emit('export_projected', { success: true });
-                } else {
-                    console.error(`[export_project] Failed to export project: ${project_id}`);
-                    io.to(project_id).emit('export_projected', { success: false });
-                }
+        socket.on('start_container', () => {
+            console.log(`[start_container] Project ID: ${project_id}`);
+            docker.createContainer(project_id).then(() => {
+                console.log(`[start_container] Created container for project: ${project_id}`);
             });
+        });
+
+        socket.on('terminal_input', (args: string[]) => {
+            let input = args[0];
+            console.log(`[terminal_input] Project ID: ${project_id}, Input: ${input}`);
+            docker.sendInput(project_id, input);
         });
     });
 

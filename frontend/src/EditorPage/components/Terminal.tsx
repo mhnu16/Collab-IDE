@@ -24,9 +24,15 @@ export default function Terminal({ closeTerminal }: { closeTerminal: () => void 
     // Sets up the event listener for the terminal output
     React.useEffect(() => {
         sm.on("terminal_output", (data: string) => {
-            setOutput(output + data);
+            console.log(`[terminal_output] Data: ${data}`);
+            setOutput((prev) => prev + data);
         });
     }, [sm]);
+
+    // Sends a request to the backend to start the docker container
+    React.useEffect(() => {
+        sm.emit("start_container");
+    }, []);
 
     function sendInput() {
         sm.emit("terminal_input", input);
