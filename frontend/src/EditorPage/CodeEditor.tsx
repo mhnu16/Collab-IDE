@@ -150,7 +150,7 @@ export default function EditorPage() {
     doc.current = new Y.Doc();
 
     console.log('Creating provider for:', uri_path);
-    provider.current = new SocketIOProvider('https://localhost', project_id + '/' + uri_path, doc.current, {}, {
+    provider.current = new SocketIOProvider(self.location.origin, project_id + '/' + uri_path, doc.current, {}, {
       query: {
         project_id: project_id
       }
