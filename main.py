@@ -36,6 +36,7 @@ def main(dev_mode=False):
     if not nginx_path:
         print("Error: nginx not found. Please install it and try again.")
         exit(1)
+    os.chdir(nginx_path)
     check_dependency("nginx -v")
 
     processes = []
@@ -57,8 +58,7 @@ def main(dev_mode=False):
         start(processes, ts_cmd)
 
         os.chdir(nginx_path)
-        nginx_conf_path = os.path.join(root, "nginx.conf")
-        nginx_cmd = f"./nginx -c {nginx_conf_path}"
+        nginx_cmd = f"./nginx -c ../nginx.conf"
         start(processes, nginx_cmd)
 
     else:
@@ -78,8 +78,7 @@ def main(dev_mode=False):
         start(processes, ts_cmd)
 
         os.chdir(nginx_path)
-        nginx_conf_path = os.path.join(root, "nginx.conf")
-        nginx_cmd = f"./nginx -c {nginx_conf_path}"
+        nginx_cmd = f"./nginx -c ../nginx.conf"
         start(processes, nginx_cmd)
 
     print()
