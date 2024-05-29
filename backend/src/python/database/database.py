@@ -163,6 +163,9 @@ class Database:
     instance = None
 
     def __init__(self) -> None:
+        if Database.instance:
+            raise Exception("This class is a singleton!")
+
         self.engine = create_engine("sqlite:///" + DATABASE.DB_PATH, echo=False)
         Base.metadata.create_all(self.engine)
         self.Session = scoped_session(sessionmaker(bind=self.engine))
@@ -400,41 +403,6 @@ class Database:
         elif self.Session.is_active:
             return True
         return False
-
-    @staticmethod
-    def __get_file_language(extension: str) -> str:
-        """
-        Gets the language of a file based on its extension.
-
-        Note:
-            Does not require a database session.
-
-        Args:
-            extension: The extension of the file.
-
-        Returns:
-            The language of the file.
-        """
-
-        extension_to_language = {
-            "py": "python",
-            "js": "javascript",
-            "ts": "typescript",
-            "java": "java",
-            "c": "c",
-            "cpp": "cpp",
-            "cs": "csharp",
-            "go": "go",
-            "rb": "ruby",
-            "php": "php",
-            "html": "html",
-            "css": "css",
-            "json": "json",
-            "xml": "xml",
-            "md": "markdown",
-        }
-
-        return extension_to_language.get(extension, "plaintext")
 
     @staticmethod
     def generate_id() -> str:
