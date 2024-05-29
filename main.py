@@ -1,13 +1,20 @@
 import os
 import subprocess as sp
 
+def find_nginx_dir(root: str) -> str:
+    for directory in os.listdir(root):
+        path = os.path.join(root, directory)
+        if os.path.isdir(path) and directory.startswith("nginx"):
+            return path
+    return ""
 
 def check_dependency(cmd):
     try:
+        print(f"Running: {cmd}")
         output = sp.check_output(cmd, shell=True)
         print(f"Output: {output.decode()}")
     except sp.CalledProcessError:
-        print(f"Error: {cmd} not found. Please install it and try again.")
+        print(f"\nError: {cmd} not found. Please install it and try again.")
         exit(1)
 
 
@@ -24,7 +31,11 @@ def main(dev_mode=False):
     check_dependency("npm --version")
     check_dependency("python --version")
 
-    os.chdir(os.path.join(root, "nginx-1.25.4"))
+    # Check if nginx is installed
+    nginx_path = find_nginx_dir(root)
+    if not nginx_path:
+        print("Error: nginx not found. Please install it and try again.")
+        exit(1)
     check_dependency("nginx -v")
 
     processes = []
@@ -45,7 +56,7 @@ def main(dev_mode=False):
         ts_cmd = "tsc; if ($?) { node dist/server.cjs }"
         start(processes, ts_cmd)
 
-        os.chdir(os.path.join(root, "nginx-1.25.4"))
+        os.chdir(nginx_path)
         nginx_conf_path = os.path.join(root, "nginx.conf")
         nginx_cmd = f"./nginx -c {nginx_conf_path}"
         start(processes, nginx_cmd)
@@ -66,7 +77,7 @@ def main(dev_mode=False):
         ts_cmd = "tsc; if ($?) { node dist/server.cjs }"
         start(processes, ts_cmd)
 
-        os.chdir(os.path.join(root, "nginx-1.25.4"))
+        os.chdir(nginx_path)
         nginx_conf_path = os.path.join(root, "nginx.conf")
         nginx_cmd = f"./nginx -c {nginx_conf_path}"
         start(processes, nginx_cmd)

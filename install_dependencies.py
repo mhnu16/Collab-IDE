@@ -1,7 +1,32 @@
 import os
 import zipfile
 import requests
+import io
 
+
+def get_latest_nginx_version():
+    # Fetch the HTML page where the latest Nginx version is listed
+    url = 'https://nginx.org/en/download.html'
+    response = requests.get(url)
+    
+    # Extract the version number from the HTML content
+    # This regex pattern looks for the string "nginx-" followed by the version number
+    import re
+    match = re.search(r'nginx-(\d+\.\d+\.\d+)', response.text)
+    if match:
+        return match.group(1)
+    else:
+        print("Failed to extract Nginx version.")
+        return None
+
+def download_nginx(version):
+    # Download the Nginx source code
+    url = f'https://nginx.org/download/nginx-{version}.zip'
+    response = requests.get(url)
+
+    # unzips the downloaded response
+    root = os.path.dirname(os.path.abspath(__file__))
+    zipfile.ZipFile(io.BytesIO(response.content)).extractall(root)
 
 def install_dependencies():
     root = os.path.dirname(os.path.abspath(__file__))
@@ -11,24 +36,9 @@ def install_dependencies():
     os.system(cmd_prefix + "pip install -r requirements.txt")
     os.system(cmd_prefix + "npm install")
 
-
-    # Download and install nginx
-    nginx_file = "nginx-1.25.4" # Update this to the latest version
-    nginx_url = f"https://nginx.org/download/{nginx_file}.zip"
-    nginx_zip_path = os.path.join(root, f"{nginx_file}.zip")
-    nginx_path = os.path.join(root, nginx_file)
-
-    # Download nginx if it's not already downloaded
-    if not os.path.exists(nginx_zip_path):
-        response = requests.get(nginx_url)
-        with open(nginx_zip_path, "wb") as f:
-            f.write(response.content)
-
-    # Extract nginx if it's not already extracted
-    if not os.path.exists(nginx_path):
-        with zipfile.ZipFile(nginx_zip_path, "r") as zip_ref:
-            zip_ref.extractall(root)
-
+    # Install Nginx
+    version = get_latest_nginx_version()
+    download_nginx(version)
 
 if __name__ == "__main__":
     install_dependencies()
