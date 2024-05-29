@@ -9,9 +9,9 @@ from random import random
 
 
 class ApiServer:
-    def __init__(self, app: flask.Flask):
+    def __init__(self):
         self.database = Database.get_instance()
-        self.app = app
+        self.app = flask.Flask(__name__)
 
         @self.app.route("/api/rand")
         def rand():
@@ -124,7 +124,7 @@ class ApiServer:
             return self.json_response(False, {"error": "Failed to create project"})
 
         @self.app.route("/api/projects/<project_id>", methods=["DELETE"])
-        def delete_project(project_id):
+        def delete_project(project_id: str):
             with self.database.session_scope():
                 project = self.database.select_from(
                     Project, Project.project_id == project_id
@@ -274,7 +274,7 @@ class ApiServer:
                 flask.g.user_id = user.id
 
         @self.app.after_request
-        def after_request(response):
+        def after_request(response: flask.Response) -> flask.Response:
             if not flask.request.path.startswith("/api"):
                 return response
             if flask.request.path in ["/api/login", "/api/logout", "/api/register"]:
@@ -295,7 +295,16 @@ class ApiServer:
                 )
             return response
 
-    def json_response(self, success: bool, data: dict[str, Any], status_code=200):
+    def json_response(
+        self, success: bool, data: dict[str, Any], status_code: int = 200
+    ):
         return flask.make_response(
             flask.jsonify({"success": success, "data": data}), status_code
+        )
+
+    def start(self, debug=False):
+        self.app.run(
+            host=SERVER.IP,
+            port=SERVER.PORT,
+            debug=debug,
         )

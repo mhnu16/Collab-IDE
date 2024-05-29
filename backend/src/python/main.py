@@ -8,15 +8,10 @@ from api import ApiServer
 class Server:
     def __init__(self) -> None:
         self.database = Database.get_instance()
-        self.app = flask.Flask(__name__)
-        ApiServer(self.app)  # Adds the API routes to the Flask app
+        self.api_server = ApiServer()  # Adds the API routes to the Flask app
 
     def run(self, debug=False):
-        self.app.run(
-            host="localhost",
-            port=5000,
-            debug=debug,
-        )
+        self.api_server.start(debug=debug)
 
 
 def main():
