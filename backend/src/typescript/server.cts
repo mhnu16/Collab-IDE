@@ -2,8 +2,8 @@ import express from 'express';
 import axios from 'axios';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
-import yjsIO from './yjs-controller.cjs';
-import dockerController from './docker-controller.cjs';
+import YjsController from './yjs-controller.cjs';
+import DockerController from './docker-controller.cjs';
 
 const app = express();
 
@@ -15,9 +15,9 @@ const io = new Server(server, {
     },
 });
 
-const yjs = new yjsIO(io);
+const yjs = new YjsController(io);
 
-const docker = new dockerController(io, yjs);
+const docker = new DockerController(io, yjs);
 
 io.use((socket, next) => {
     let handshake = socket.handshake;

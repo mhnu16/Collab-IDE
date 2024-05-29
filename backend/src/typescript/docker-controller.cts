@@ -2,18 +2,17 @@ import Docker from 'dockerode';
 import fs from 'fs';
 import path from 'path';
 import { Server } from 'socket.io';
-import yjsIO from './yjs-controller.cjs';
-import { Stream } from 'stream';
+import YjsController from './yjs-controller.cjs';
 
 
 export default class DockerController {
     private io: Server;
-    private yjs: yjsIO;
+    private yjs: YjsController;
     private docker: Docker = new Docker();
     private containers: Map<string, Container> = new Map();
     private containerPromises: Map<string, Promise<Container>> = new Map();
 
-    constructor(io: Server, yjs: yjsIO) {
+    constructor(io: Server, yjs: YjsController) {
         this.io = io;
         this.yjs = yjs;
         this.buildImage();
@@ -46,7 +45,6 @@ export default class DockerController {
     }
 
     private async buildImage() {
-        console.log(path.join(__dirname, '../docker'));
         await this.docker.buildImage({
             context: path.join(__dirname, '../docker'),
             src: ['Dockerfile']
@@ -84,7 +82,8 @@ export default class DockerController {
     async sendInput(project_id: string, input: string) {
         let container = this.containers.get(project_id);
         if (!container) {
-            throw new Error(`No container for project ${project_id}`);
+            console.error(`No container for project ${project_id}`);
+            return;
         }
 
         container.sendInput(input);
@@ -94,13 +93,13 @@ export default class DockerController {
 class Container {
     private project_id: string;
     private io: Server;
-    private yjs: yjsIO;
+    private yjs: YjsController;
     private docker: Docker = new Docker();
     private container!: Docker.Container;
     private stdin!: NodeJS.ReadWriteStream;
     private stdout!: NodeJS.ReadWriteStream;
 
-    constructor(project_id: string, io: Server, yjs: yjsIO) {
+    constructor(project_id: string, io: Server, yjs: YjsController) {
         this.project_id = project_id;
         this.io = io;
         this.yjs = yjs;

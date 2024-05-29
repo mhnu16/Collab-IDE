@@ -5,7 +5,7 @@ import { LeveldbPersistence } from 'y-leveldb';
 import { Document, YSocketIO } from 'y-socket.io/dist/server';
 import Y from 'yjs';
 
-export default class yjsIO {
+export default class YjsController {
     yio: YSocketIO;
     persistence: LeveldbPersistence;
 
