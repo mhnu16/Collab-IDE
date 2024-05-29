@@ -122,7 +122,6 @@ export default function EditorPage() {
     editor.current.onDidDispose(() => {
       console.log('Editor disposed, destroying Yjs');
       monacoBinding.current.destroy();
-      // doc.current.destroy();
       provider.current.destroy();
     });
 

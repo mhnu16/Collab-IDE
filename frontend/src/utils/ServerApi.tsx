@@ -27,7 +27,7 @@ export interface Project {
     language: string;
     created_at: Date;
     last_updated_at: Date;
-    allowed_users: User[];    
+    allowed_users: User[];
 }
 
 export interface Projects {
@@ -40,7 +40,9 @@ export type UserResponse = Resp<User>;
 export type ProjectResponse = Resp<Project>;
 export type ProjectsResponse = Resp<Projects>;
 
-export function sendRequest<T extends ApiResponse>(url: string, method: string, data?: any): Promise<T> {
+export function sendRequest<T extends ApiResponse>(
+    url: string, method: string, data?: any
+): Promise<T> {
     if (method === "POST") {
         return new Promise<T>((resolve, reject) => {
             jquery.ajax({
@@ -83,9 +85,6 @@ export interface File {
 export class SocketManager {
     private static instances: Map<string, SocketManager> = new Map<string, SocketManager>();
     private socket: Socket;
-    // private provider?: SocketIOProvider;
-    // private ydoc?: Y.Doc;
-    // private ytext?: Y.Text;
 
     private constructor(project_id: string) {
         this.socket = io({
