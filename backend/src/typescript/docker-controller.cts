@@ -14,6 +14,9 @@ export default class DockerController {
     private containerPromises: Map<string, Promise<Container>> = new Map();
 
     constructor(io: Server, yjs: YjsController) {
+        // Closes all pre-existing containers when the server is restarted
+        this.closeAllContainers();
+
         this.io = io;
         this.yjs = yjs;
         this.buildImage();
@@ -21,30 +24,27 @@ export default class DockerController {
         process.on('SIGINT', async () => {
             trace('exit')
             console.log('Stopping all containers');
-            let containersInfo = await this.docker.listContainers({ all: true })
-            for (let containerInfo of containersInfo) {
-                // If the container is a code-executor container, remove it
-                if (containerInfo.Image === 'code-executor') {
-                    let container = this.docker.getContainer(containerInfo.Id);
-                    await container.remove({ force: true });
-                }
-            }
+            this.closeAllContainers();
             process.exit();
         });
 
         process.on('uncaughtException', async () => {
             trace('unexpect')
             console.log('Stopping all containers');
-            let containersInfo = await this.docker.listContainers({ all: true })
-            for (let containerInfo of containersInfo) {
-                // If the container is a code-executor container, remove it
-                if (containerInfo.Image === 'code-executor') {
-                    let container = this.docker.getContainer(containerInfo.Id);
-                    await container.remove({ force: true });
-                }
-            }
+            this.closeAllContainers();
             process.exit();
         });
+    }
+
+    private async closeAllContainers() {
+        let containersInfo = await this.docker.listContainers({ all: true })
+        for (let containerInfo of containersInfo) {
+            // If the container is a code-executor container, remove it
+            if (containerInfo.Image === 'code-executor') {
+                let container = this.docker.getContainer(containerInfo.Id);
+                await container.remove({ force: true });
+            }
+        }
     }
 
     private async buildImage() {
