@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { Server } from 'socket.io';
 import YjsController from './yjs-controller.cjs';
+import { trace } from 'console';
 
 
 export default class DockerController {
@@ -18,6 +19,7 @@ export default class DockerController {
         this.buildImage();
         // Stops all containers when the server is stopped or occurs an error
         process.on('SIGINT', async () => {
+            trace('exit')
             console.log('Stopping all containers');
             let containersInfo = await this.docker.listContainers({ all: true })
             for (let containerInfo of containersInfo) {
@@ -31,6 +33,7 @@ export default class DockerController {
         });
 
         process.on('uncaughtException', async () => {
+            trace('unexpect')
             console.log('Stopping all containers');
             let containersInfo = await this.docker.listContainers({ all: true })
             for (let containerInfo of containersInfo) {
@@ -52,21 +55,32 @@ export default class DockerController {
     }
 
     async createContainer(project_id: string) {
-        if (this.containerPromises.has(project_id)) {
-            let container = await this.containerPromises.get(project_id);
+        try {
+            if (this.containers.has(project_id)) {
+                let container = this.containers.get(project_id)
+                console.log("[createContainer] Returning pre-existing container")
+                return container
+            }
+            else if (this.containerPromises.has(project_id)) {
+                let container = await this.containerPromises.get(project_id);
+                console.log("[createContainer] Returning pre-existing promise")
+                return container;
+            }
+
+            let promise = new Promise<Container>((resolve, reject) => {
+                let container = new Container(project_id, this.io, this.yjs);
+                this.containers.set(project_id, container);
+                resolve(container);
+            });
+
+            this.containerPromises.set(project_id, promise);
+            let container = await promise;
+            this.containerPromises.delete(project_id)
             return container;
+        } catch (error) {
+            console.error(error)
+            throw error
         }
-
-        let promise = new Promise<Container>((resolve, reject) => {
-            let container = new Container(project_id, this.io, this.yjs);
-            this.containers.set(project_id, container);
-            resolve(container);
-        });
-
-        this.containerPromises.set(project_id, promise);
-        let container = await promise;
-        return container;
-
     }
 
     async stopContainer(project_id: string) {
@@ -77,6 +91,7 @@ export default class DockerController {
         }
 
         await container.remove();
+        this.containers.delete(project_id)
     }
 
     async sendInput(project_id: string, input: string) {
@@ -114,28 +129,34 @@ class Container {
     }
 
     private async create() {
-        // Exports the project files
-        let projectDir = await this.yjs.exportProjectToDirectory(this.project_id)
+        try {
+            // Exports the project files
+            let projectDir = await this.yjs.exportProjectToDirectory(this.project_id)
+            projectDir = fs.realpathSync(projectDir)
 
-        let container = await this.docker.createContainer({
-            Image: 'code-executor',
-            name: this.project_id,
-            Tty: true,
-            AttachStdin: true,
-            AttachStdout: true,
-            AttachStderr: true,
-            OpenStdin: true,
-            StdinOnce: false,
-            WorkingDir: '/app',
-            HostConfig: {
-                Binds: [`${projectDir}:/app`]
-            },
-            Cmd: ['bash'],
-            Env: ['TERM=dumb'] // Makes the terminal output *DUMB*
-        });
+            let container = await this.docker.createContainer({
+                Image: 'code-executor',
+                name: this.project_id,
+                Tty: true,
+                AttachStdin: true,
+                AttachStdout: true,
+                AttachStderr: true,
+                OpenStdin: true,
+                StdinOnce: false,
+                WorkingDir: '/app',
+                HostConfig: {
+                    Binds: [`${projectDir}:/app`]
+                },
+                Cmd: ['bash'],
+                Env: ['TERM=dumb'] // Makes the terminal output *DUMB*
+            });
 
-        container.start();
-        return container;
+            container.start();
+            return container;
+        } catch (error) {
+            console.error('h', error)
+            throw error
+        }
     }
 
     public sendInput(input: string) {
