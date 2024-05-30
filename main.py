@@ -54,7 +54,7 @@ def main(dev_mode=False):
         start(processes, py_cmd)
 
         os.chdir(os.path.join(root, "backend", "src", "typescript"))
-        ts_cmd = "tsc; if ($?) { node dist/server.cjs }"
+        ts_cmd = "npx tsc; if ($?) { node dist/server.cjs }"
         start(processes, ts_cmd)
 
         os.chdir(nginx_path)
@@ -74,7 +74,7 @@ def main(dev_mode=False):
         start(processes, py_cmd)
 
         os.chdir(os.path.join(root, "backend", "src", "typescript"))
-        ts_cmd = "tsc; if ($?) { node dist/server.cjs }"
+        ts_cmd = "npx tsc; if ($?) { node dist/server.cjs }"
         start(processes, ts_cmd)
 
         os.chdir(nginx_path)
